@@ -1,0 +1,2604 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AsesmenPro AI — Generator Paket Asesmen Kurikulum Merdeka</title>
+
+  <!-- PWA Manifest via Data URI (1-File Mandate) -->
+  <link rel="manifest" href='data:application/manifest+json,{"name":"AsesmenPro AI - Paket Asesmen Kurikulum Merdeka","short_name":"AsesmenPro","start_url":".","display":"standalone","background_color":"#F8FAFC","theme_color":"#1E3A5F","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2724%27 fill=%27%231E3A5F%27/%3E%3Cpath d=%27M30 30h40v8H30zm0 16h40v8H30zm0 16h26v8H30z%27 fill=%27%23F59E0B%27/%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml"}]}' />
+  <meta name="theme-color" content="#1E3A5F" />
+
+  <!-- Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            navy: {
+              900: '#0F233D',
+              800: '#1E3A5F',
+              700: '#2B4F7E',
+            },
+            amberbrand: {
+              500: '#F59E0B',
+              600: '#D97706',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Reset agar Full Page saat disematkan di Widget Blogger / iFrame */
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #F8FAFC;
+      color: #0F172A;
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Glassmorphism & Modern Corporate Utilities */
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.86);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(226, 232, 240, 0.85);
+    }
+
+    .glass-nav {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+
+    /* Pratinjau Dokumen Kertas A4 */
+    .paper-sheet {
+      background: #FFFFFF;
+      box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+      border: 1px solid #E2E8F0;
+      font-family: 'Times New Roman', Times, serif;
+      color: #000000;
+      line-height: 1.5;
+    }
+    .paper-sheet table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .paper-sheet th, .paper-sheet td {
+      border: 1px solid #1E293B;
+      padding: 6px 8px;
+      vertical-align: top;
+    }
+    .paper-sheet th {
+      background-color: #F1F5F9;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    /* Responsif Navigasi: Desktop Sidebar vs Mobile Floating Bottom Bar */
+    @media (min-width: 1024px) {
+      .desktop-sidebar {
+        display: flex;
+        width: 17rem;
+      }
+      .mobile-bottom-nav {
+        display: none;
+      }
+      .main-content-area {
+        margin-left: 17rem;
+        width: calc(100% - 17rem);
+        padding-bottom: 2.5rem;
+      }
+    }
+    @media (max-width: 1023px) {
+      .desktop-sidebar {
+        display: none;
+      }
+      .mobile-bottom-nav {
+        display: flex;
+      }
+      .main-content-area {
+        margin-left: 0;
+        width: 100%;
+        padding-bottom: 6.5rem;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased selection:bg-amber-200 selection:text-navy-900">
+
+  <!-- Root Container -->
+  <div id="app" class="min-h-screen flex flex-col"></div>
+
+  <!-- Firebase & Application Logic Module -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      signInAnonymously,
+      signInWithCustomToken,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      addDoc,
+      updateDoc,
+      deleteDoc,
+      onSnapshot,
+      collection,
+      getDocs,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    /* ============================================================================
+       1. KONFIGURASI DEPLOYMENT & FIREBASE
+       ============================================================================ */
+    const IS_PREVIEW = false; // Set false JIKA SUDAH TERHUBUNG KE FIREBASE ANDA DI BLOGGER
+
+    // PASTE FIREBASE CONFIG ANDA DI SINI
+    const manualFirebaseConfig = {
+      apiKey: "AIzaSyCf2476NcUXigKxly62o9mBNWomJi0xwF4",
+  authDomain: "gen-soal-fef4b.firebaseapp.com",
+  projectId: "gen-soal-fef4b",
+  storageBucket: "gen-soal-fef4b.firebasestorage.app",
+  messagingSenderId: "153884775922",
+  appId: "1:153884775922:web:c12bb50e062ce46d5a476b"
+    };
+
+    // Dukungan otomatis jika berjalan di lingkungan Canvas yang menyediakan __firebase_config
+    const hasEnvConfig = typeof __firebase_config !== "undefined" && __firebase_config;
+    const activeFirebaseConfig = hasEnvConfig ? JSON.parse(__firebase_config) : manualFirebaseConfig;
+    const APP_ID = typeof __app_id !== "undefined" ? __app_id : "asesmenpro-kurmer-v1";
+    const USE_FIREBASE = hasEnvConfig || (!IS_PREVIEW && activeFirebaseConfig.apiKey !== "API_KEY_ANDA");
+
+    let fbApp = null;
+    let fbAuth = null;
+    let fbDb = null;
+
+    if (USE_FIREBASE) {
+      try {
+        fbApp = initializeApp(activeFirebaseConfig);
+        fbAuth = getAuth(fbApp);
+        fbDb = getFirestore(fbApp);
+      } catch (err) {
+        console.error("Gagal inisialisasi Firebase:", err);
+      }
+    }
+
+    /* ============================================================================
+       2. REGISTRASI SERVICE WORKER (PWA 1 FILE VIA BLOB)
+       ============================================================================ */
+    if ("serviceWorker" in navigator) {
+      try {
+        const swCode = `
+          const CACHE_NAME = 'asesmenpro-cache-v1';
+          self.addEventListener('install', (e) => {
+            self.skipWaiting();
+          });
+          self.addEventListener('activate', (e) => {
+            e.waitUntil(clients.claim());
+          });
+          self.addEventListener('fetch', (e) => {
+            if (e.request.method !== 'GET') return;
+            e.respondWith(
+              fetch(e.request).catch(() => caches.match(e.request))
+            );
+          });
+        `;
+        const swBlob = new Blob([swCode], { type: "application/javascript" });
+        const swUrl = URL.createObjectURL(swBlob);
+        navigator.serviceWorker.register(swUrl).catch(() => {});
+      } catch (e) {}
+    }
+
+    /* ============================================================================
+       3. DATA KURIKULUM MERDEKA, KONSTANTA ASESMEN & GENERATOR DOKUMEN
+       ============================================================================ */
+    const HURUF = ["A", "B", "C", "D", "E", "F", "G", "H"];
+
+    const JENJANG = {
+      SD: {
+        nama: "SD / MI",
+        kelas: ["1", "2", "3", "4", "5", "6"],
+        fase: { "1": "A", "2": "A", "3": "B", "4": "B", "5": "C", "6": "C" },
+        opsi: 4,
+        mapel: [
+          "Pendidikan Pancasila",
+          "Bahasa Indonesia",
+          "Matematika",
+          "IPAS (Ilmu Pengetahuan Alam dan Sosial)",
+          "Pendidikan Agama Islam dan Budi Pekerti",
+          "PJOK",
+          "Seni Rupa",
+          "Bahasa Inggris"
+        ]
+      },
+      SMP: {
+        nama: "SMP / MTs",
+        kelas: ["7", "8", "9"],
+        fase: { "7": "D", "8": "D", "9": "D" },
+        opsi: 4,
+        mapel: [
+          "Pendidikan Pancasila",
+          "Bahasa Indonesia",
+          "Matematika",
+          "Ilmu Pengetahuan Alam (IPA)",
+          "Ilmu Pengetahuan Sosial (IPS)",
+          "Bahasa Inggris",
+          "Informatika",
+          "Pendidikan Agama Islam dan Budi Pekerti",
+          "PJOK",
+          "Seni Budaya"
+        ]
+      },
+      SMA: {
+        nama: "SMA / MA / SMK",
+        kelas: ["10", "11", "12"],
+        fase: { "10": "E", "11": "F", "12": "F" },
+        opsi: 5,
+        mapel: [
+          "Pendidikan Pancasila",
+          "Bahasa Indonesia",
+          "Matematika",
+          "Bahasa Inggris",
+          "Fisika",
+          "Kimia",
+          "Biologi",
+          "Ekonomi",
+          "Sosiologi",
+          "Geografi",
+          "Sejarah",
+          "Informatika",
+          "Pendidikan Agama Islam dan Budi Pekerti"
+        ]
+      }
+    };
+
+    const JENIS = {
+      formatif: { singkat: "PH", nama: "Asesmen Formatif / Penilaian Harian", waktuDefault: 60 },
+      sumatif: { singkat: "STS", nama: "Asesmen Sumatif Tengah Semester (STS)", waktuDefault: 90 },
+      sas: { singkat: "SAS", nama: "Asesmen Sumatif Akhir Semester (SAS)", waktuDefault: 120 },
+      us: { singkat: "US", nama: "Asesmen Sumatif Akhir Jenjang / Ujian Sekolah", waktuDefault: 120 }
+    };
+
+    const BENTUK_INFO = {
+      pg: { label: "Pilihan Ganda (PG)", kode: "PG", skorDefault: 1, desc: "Satu jawaban paling tepat" },
+      pgk: { label: "Pilihan Ganda Kompleks", kode: "PGK", skorDefault: 2, desc: "Lebih dari satu jawaban benar" },
+      bs: { label: "Benar / Salah", kode: "B/S", skorDefault: 2, desc: "Menentukan Benar/Salah beberapa pernyataan" },
+      mj: { label: "Menjodohkan", kode: "MJ", skorDefault: 3, desc: "Memasangkan premis kiri dengan respons kanan" },
+      is: { label: "Isian Singkat", kode: "IS", skorDefault: 2, desc: "Jawaban singkat padat dan pasti" },
+      ur: { label: "Uraian / Esai", kode: "UR", skorDefault: 4, desc: "Jawaban analitis disertai rubrik penskoran" }
+    };
+
+    // Bank Capaian Pembelajaran (CP) Ringkas Kurikulum Merdeka (Permendikbudristek 032/H/KR/2024)
+    const CP_BANK = {
+      "Matematika": {
+        A: [
+          { kode: "Bilangan", teks: "Peserta didik menunjukkan pemahaman dan memiliki intuisi bilangan (number sense) pada bilangan cacah sampai 100, membaca, menulis, menentukan nilai tempat, membandingkan, mengurutkan, serta melakukan komposisi dan dekomposisi bilangan." },
+          { kode: "Aljabar", teks: "Peserta didik dapat menunjukkan pemahaman makna simbol matematika '=' dalam suatu kalimat matematika yang terkait dengan penjumlahan dan pengurangan bilangan cacah sampai 20 menggunakan gambar." },
+          { kode: "Pengukuran & Geometri", teks: "Peserta didik dapat membandingkan panjang dan berat benda secara langsung, membandingkan durasi waktu, serta mengenal berbagai bangun datar dan bangun ruang." }
+        ],
+        B: [
+          { kode: "Bilangan", teks: "Peserta didik menunjukkan pemahaman dan intuisi bilangan pada bilangan cacah sampai 10.000, melakukan operasi penjumlahan, pengurangan, perkalian, dan pembagian, serta menyelesaikan masalah berkaitan dengan uang dan pecahan senilai." },
+          { kode: "Pengukuran", teks: "Peserta didik dapat mengukur panjang dan berat benda menggunakan satuan baku, menentukan hubungan antar-satuan baku panjang (cm, m), serta mengukur dan mengestimasi luas dan volume menggunakan satuan tidak baku dan satuan baku." },
+          { kode: "Geometri & Data", teks: "Peserta didik dapat mendeskripsikan ciri berbagai bentuk bangun datar (segiempat, segitiga, segibanyak) dan menyajikan data dalam bentuk tabel, diagram gambar, piktogram, dan diagram batang." }
+        ],
+        C: [
+          { kode: "Bilangan & Pecahan", teks: "Peserta didik dapat menunjukkan pemahaman dan intuisi bilangan pada bilangan cacah sampai 1.000.000, menentukan KPK dan FPB, serta membandingkan, mengurutkan, dan melakukan operasi hitung pecahan dan desimal." },
+          { kode: "Pengukuran & Geometri", teks: "Peserta didik dapat menentukan keliling dan luas berbagai bentuk bangun datar serta gabungannya, menghitung durasi waktu, mengukur besar sudut, dan mengonstruksi serta mengurai bangun ruang (kubus, balok)." },
+          { kode: "Analisis Data & Peluang", teks: "Peserta didik dapat mengurutkan, membandingkan, menyajikan, dan menganalisis data banyak benda dan data hasil pengukuran dalam bentuk gambar, piktogram, diagram batang, dan tabel frekuensi." }
+        ],
+        D: [
+          { kode: "Bilangan & Aljabar", teks: "Peserta didik dapat membaca, menulis, dan membandingkan bilangan bulat, bilangan rasional dan irasional, bilangan desimal, bilangan berpangkat bulat dan akar, serta menyelesaikan persamaan dan pertidaksamaan linear satu variabel dan sistem persamaan linear dua variabel." },
+          { kode: "Geometri & Pengukuran", teks: "Peserta didik dapat menentukan luas permukaan dan volume bangun ruang (prisma, tabung, bola, limas dan kerucut), menggunakan teorema Pythagoras, serta melakukan transformasi tunggal (refleksi, translasi, rotasi, dan dilatasi)." },
+          { kode: "Analisis Data & Peluang", teks: "Peserta didik dapat merumuskan pertanyaan, mengumpulkan, menyajikan, dan menganalisis data untuk menjawab pertanyaan, menggunakan diagram batang dan diagram lingkaran, serta menjelaskan dan menggunakan pengertian peluang." }
+        ],
+        E: [
+          { kode: "Bilangan & Aljabar", teks: "Peserta didik dapat menggeneralisasi sifat-sifat bilangan berpangkat (termasuk bilangan pangkat pecahan), menerapkan barisan dan deret aritmetika dan geometri, serta menyelesaikan masalah yang berkaitan dengan sistem persamaan linear tiga variabel dan fungsi kuadrat." },
+          { kode: "Geometri & Trigonometri", teks: "Peserta didik dapat menyelesaikan permasalahan segitiga siku-siku yang melibatkan perbandingan trigonometri dan aplikasinya dalam kehidupan sehari-hari." },
+          { kode: "Analisis Data & Peluang", teks: "Peserta didik dapat merepresentasikan dan menginterpretasi data dengan cara menentukan jangkauan kuartil dan interkuartil, serta menentukan peluang kejadian majemuk." }
+        ],
+        F: [
+          { kode: "Aljabar dan Fungsi", teks: "Peserta didik dapat menyatakan data dalam bentuk matriks, menentukan fungsi invers, komposisi fungsi, dan transformasi fungsi untuk memodelkan situasi dunia nyata." },
+          { kode: "Geometri & Kalkulus", teks: "Peserta didik dapat menerapkan teorema tentang lingkaran, menentukan panjang busur dan luas juring, serta memahami laju perubahan dan turunan fungsi aljabar." }
+        ]
+      },
+      "Bahasa Indonesia": {
+        A: [
+          { kode: "Menyimak & Membaca", teks: "Peserta didik bersikap menjadi pendengar yang penuh perhatian, memahami pesan lisan dan informasi dari media audio, teks aural, dan instruksi lisan, serta mampu membaca kata-kata yang dikenalinya sehari-hari dengan fasih." },
+          { kode: "Berbicara & Menulis", teks: "Peserta didik mampu berbicara dengan santun menggunakan volume dan intonasi yang tepat sesuai konteks, serta menunjukkan keterampilan menulis permulaan dengan benar di atas kertas dan/atau melalui media digital." }
+        ],
+        B: [
+          { kode: "Membaca & Memirsa", teks: "Peserta didik mampu memahami pesan dan informasi tentang kehidupan sehari-hari, teks narasi, dan puisi anak dalam bentuk cetak atau elektronik, serta memaknai kosakata baru dari teks yang dibaca atau tayangan yang dipirsa." },
+          { kode: "Menulis & Berbicara", teks: "Peserta didik mampu menulis teks narasi, teks deskripsi, teks rekon, teks prosedur, dan teks eksposisi dengan rangkaian kalimat yang beragam, informasi yang rinci dan akurat dengan topik yang beragam." }
+        ],
+        C: [
+          { kode: "Membaca & Memirsa", teks: "Peserta didik mampu membaca kata-kata dengan berbagai pola kombinasi huruf dengan fasih dan indah serta memahami informasi dan kosakata baru yang memiliki makna denotatif, literal, konotatif, dan kiasan untuk mengidentifikasi objek, fenomena, dan karakter." },
+          { kode: "Menulis", teks: "Peserta didik mampu menulis teks eksplanasi, laporan, dan eksposisi persuasif dari gagasan, hasil pengamatan, pengalaman, dan imajinasi; menjelaskan hubungan kausalitas, serta menuangkan hasil pengamatan untuk meyakinkan pembaca." }
+        ],
+        D: [
+          { kode: "Membaca & Memirsa", teks: "Peserta didik memahami informasi berupa gagasan, pikiran, pandangan, arahan atau pesan dari berbagai jenis teks misalnya teks deskripsi, narasi, puisi, eksplanasi dan eksposisi dari teks visual dan audiovisual untuk menemukan makna yang tersurat dan tersirat." },
+          { kode: "Menulis", teks: "Peserta didik mampu menulis gagasan, pikiran, pandangan, arahan atau pesan tertulis untuk berbagai tujuan secara logis, kritis, dan kreatif, serta menulis teks eksposisi hasil penelitian dan teks fungsional dunia kerja." }
+        ],
+        E: [
+          { kode: "Membaca & Memirsa", teks: "Peserta didik mampu mengevaluasi informasi berupa gagasan, pikiran, pandangan, arahan atau pesan dari berbagai jenis teks (laporan hasil observasi, anekdot, hikayat, biografi) untuk menemukan makna yang tersurat dan tersirat." },
+          { kode: "Menulis", teks: "Peserta didik mampu menulis gagasan, pikiran, pandangan, arahan atau pesan tertulis untuk berbagai tujuan secara logis, kritis, dan kreatif dalam bentuk teks informasional dan/atau fiksi." }
+        ],
+        F: [
+          { kode: "Membaca & Menulis Kritis", teks: "Peserta didik mampu mengevaluasi gagasan dan pandangan berdasarkan kaidah logika berpikir dari membaca berbagai tipe teks (argumentasi, berita, karya ilmiah, resensi) di media cetak dan elektronik serta menyusun karya tulis ilmiah." }
+        ]
+      },
+      "IPAS (Ilmu Pengetahuan Alam dan Sosial)": {
+        B: [
+          { kode: "Pemahaman IPAS", teks: "Peserta didik menganalisis hubungan antara bentuk serta fungsi bagian tubuh pada manusia (pancaindra), mengidentifikasi proses perubahan wujud zat dan perubahan bentuk energi dalam kehidupan sehari-hari, serta mengenal keragaman budaya dan bentang alam daerahnya." },
+          { kode: "Keterampilan Proses", teks: "Peserta didik mengamati fenomena dan peristiwa secara sederhana dengan menggunakan pancaindra, mencatat hasil pengamatannya, serta membandingkan hasil pengamatan dengan prediksi." }
+        ],
+        C: [
+          { kode: "Sistem Organ & Ekosistem", teks: "Peserta didik melakukan simulasi dengan menggunakan gambar/bagan/alat/media sederhana tentang sistem organ tubuh manusia (sistem pernafasan/pencernaan/peredaran darah) yang dikaitkan dengan cara menjaga kesehatan organ tubuhnya dengan benar, serta menyelidiki hubungan saling ketergantungan antarkomponen biotik-abiotik dalam ekosistem." },
+          { kode: "Gelombang, Energi & Bumi", teks: "Peserta didik mendemonstrasikan bagaimana sistem tata surya bekerja dan kaitannya dengan gerak rotasi dan revolusi bumi, serta memahami gelombang bunyi dan cahaya serta penerapannya dalam kehidupan sehari-hari." },
+          { kode: "Sejarah & Ekonomi", teks: "Peserta didik mengenal budaya sejarah baik tokoh maupun periodisasinya di Indonesia serta menghubungkan dengan konteks kehidupan saat ini, serta memahami kegiatan ekonomi masyarakat dan ekonomi kreatif di lingkungan sekitar." }
+        ]
+      },
+      "Pendidikan Pancasila": {
+        A: [{ kode: "Pancasila & UUD 1945", teks: "Peserta didik mengenal bendera negara, lagu kebangsaan, simbol dan sila-sila Pancasila dalam lambang negara Garuda Pancasila, dan menerapkan nilai-nilai Pancasila di lingkungan keluarga; mengenal aturan di lingkungan keluarga." }],
+        B: [{ kode: "Pancasila & Bhinneka Tunggal Ika", teks: "Peserta didik menunjukkan makna sila-sila Pancasila, dan penerapannya dalam kehidupan sehari-hari; mengenal karakter para perumus Pancasila; membedakan dan menghargai identitas diri, keluarga, dan teman-temannya sesuai budaya, suku bangsa, bahasa, agama dan kepercayaannya." }],
+        C: [{ kode: "Pancasila, Konstitusi & NKRI", teks: "Peserta didik memahami kronologi sejarah kelahiran Pancasila; meneladani sikap para perumus Pancasila dan menerapkan di lingkungan masyarakat; menyajikan hasil identifikasi bentuk-bentuk norma, hak, dan kewajiban dalam kedudukannya sebagai anggota keluarga, warga sekolah, dan warga negara." }],
+        D: [{ kode: "Pancasila & Negara Hukum", teks: "Peserta didik menganalisis kronologi lahirnya Pancasila; mengkaji fungsi dan kedudukan Pancasila sebagai dasar negara dan pandangan hidup bangsa; memahami sejarah, fungsi, dan kedudukan Undang-Undang Dasar Negara Republik Indonesia Tahun 1945." }],
+        E: [{ kode: "Ideologi & Konstitusi", teks: "Peserta didik menganalisis cara pandang para pendiri negara tentang rumusan Pancasila sebagai dasar negara; menganalisis fungsi dan kedudukan Pancasila sebagai dasar negara, ideologi negara, dan identitas nasional; serta menerapkan perilaku taat hukum." }],
+        F: [{ kode: "Demokrasi & Geopolitik", teks: "Peserta didik mendeskripsikan rumusan dan keterkaitan sila-sila dalam Pancasila; menganalisis kedudukan Pancasila sebagai ideologi terbuka; serta menganalisis sistem pemerintahan, demokrasi Pancasila, dan peran Indonesia dalam perdamaian dunia." }]
+      }
+    };
+
+    const DEF = {
+      step: 1,
+      tab: "soal",
+      sekolah: "SDN Nusantara Cendekia 01",
+      penyusun: "Abdul Malik, S.Pd.",
+      nip: "19880512 201503 1 004",
+      kepalaSekolah: "Dr. Hj. Siti Aminah, M.Pd.",
+      nipKepsek: "19720814 199802 2 001",
+      tahunAjaran: "2025/2026",
+      semester: "Genap",
+      tanggal: new Date().toISOString().slice(0, 10),
+      jenjang: "SD",
+      kelas: "5",
+      mapel: "Matematika",
+      mapelLain: "",
+      jenis: "sumatif",
+      waktu: 90,
+      cpSel: [0],
+      materi: "Operasi hitung pecahan dan desimal, luas dan keliling bangun datar gabungan, serta penyajian data diagram batang.",
+      tp: "1. Peserta didik dapat menyelesaikan operasi penjumlahan dan pengurangan pecahan berpenyebut berbeda dalam masalah kontekstual.\n2. Peserta didik dapat menghitung keliling dan luas bangun datar gabungan (persegi panjang dan segitiga).\n3. Peserta didik dapat menafsirkan dan menyajikan data hasil pengamatan dalam bentuk diagram batang.",
+      jumlah: { pg: 10, pgk: 3, bs: 2, mj: 2, is: 3, ur: 2 },
+      skor: { pg: 1, pgk: 2, bs: 2, mj: 3, is: 2, ur: 4 },
+      proporsi: { lots: 30, mots: 50, hots: 20 },
+      opsiJumlah: 4,
+      soal: [],
+      apiKey: "",
+      model: "gemini-3-flash-preview"
+    };
+
+    /* ---- Fungsi Helper Kurikulum & Prompt ---- */
+    const daftarMapel = (jenjang, kelas) => {
+      const base = JENJANG[jenjang]?.mapel || [];
+      if (jenjang === "SD" && ["1", "2"].includes(String(kelas))) {
+        return base.filter(m => !m.startsWith("IPAS"));
+      }
+      return base;
+    };
+
+    const namaMapel = (s) => (s.mapel === "__lain" ? (s.mapelLain || "Mata Pelajaran") : s.mapel);
+    const faseSaatIni = (s) => JENJANG[s.jenjang]?.fase?.[String(s.kelas)] || "C";
+
+    const cpData = (s) => {
+      const mp = namaMapel(s);
+      const fase = faseSaatIni(s);
+      return CP_BANK[mp]?.[fase] || null;
+    };
+
+    const cpTerpilih = (s) => {
+      const list = cpData(s);
+      if (!list) return [];
+      const sel = Array.isArray(s.cpSel) ? s.cpSel : [0];
+      return sel.map(idx => list[idx]).filter(Boolean);
+    };
+
+    const daftarTP = (s) =>
+      String(s.tp || "")
+        .split("\n")
+        .map(x => x.replace(/^\d+[\.\)]\s*/, "").trim())
+        .filter(Boolean);
+
+    const totalSoal = (s) =>
+      Object.values(s.jumlah || {}).reduce((acc, v) => acc + (parseInt(v, 10) || 0), 0);
+
+    const totalSkorMaks = (s) =>
+      (s.soal || []).reduce((acc, q) => acc + (Number(q.skor) || 0), 0);
+
+    const esc = (str) =>
+      String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+
+    const kunciTeks = (q) => {
+      if (q.bentuk === "pg") return HURUF[q.kunci] || "A";
+      if (q.bentuk === "pgk") return (Array.isArray(q.kunci) ? q.kunci : []).map(i => HURUF[i]).join(", ");
+      if (q.bentuk === "bs") return (q.pernyataan || []).map((p, i) => `${i + 1}:${p.benar ? "B" : "S"}`).join("; ");
+      if (q.bentuk === "mj") return (q.kiri || []).map((k, i) => `${i + 1}→${HURUF[q.kunci?.[i] ?? 0]}`).join(", ");
+      return String(q.kunci || "");
+    };
+
+    function acak(arr) {
+      const idx = arr.map((_, i) => i);
+      for (let i = idx.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [idx[i], idx[j]] = [idx[j], idx[i]];
+      }
+      return idx;
+    }
+
+    function rancangSlot(s) {
+      const urutanBentuk = ["pg", "pgk", "bs", "mj", "is", "ur"];
+      const slots = [];
+      let no = 1;
+      urutanBentuk.forEach(b => {
+        const jml = parseInt(s.jumlah?.[b], 10) || 0;
+        for (let i = 0; i < jml; i++) {
+          slots.push({ no: no++, bentuk: b });
+        }
+      });
+      const n = slots.length;
+      if (!n) return [];
+      const pL = Number(s.proporsi?.lots ?? 30);
+      const pM = Number(s.proporsi?.mots ?? 50);
+      const nLots = Math.round((pL / 100) * n);
+      const nMots = Math.round((pM / 100) * n);
+      const tps = daftarTP(s);
+      slots.forEach((sl, idx) => {
+        if (idx < nLots) sl.level = "LOTS";
+        else if (idx < nLots + nMots) sl.level = "MOTS";
+        else sl.level = "HOTS";
+        sl.tp = tps.length ? tps[idx % tps.length] : `Memahami materi ${namaMapel(s)} kelas ${s.kelas}`;
+      });
+      return slots;
+    }
+
+    function konteksPrompt(s) {
+      const cps = cpTerpilih(s).map(c => `- [${c.kode}] ${c.teks}`).join("\n");
+      const tps = daftarTP(s).map((t, i) => `${i + 1}. ${t}`).join("\n");
+      return [
+        `JENJANG & KELAS: ${JENJANG[s.jenjang]?.nama} Kelas ${s.kelas} (Fase ${faseSaatIni(s)})`,
+        `MATA PELAJARAN: ${namaMapel(s)}`,
+        `JENIS ASESMEN: ${JENIS[s.jenis]?.nama}`,
+        cps ? `CAPAIAN PEMBELAJARAN (CP):\n${cps}` : "",
+        s.materi.trim() ? `MATERI POKOK:\n${s.materi.trim()}` : "",
+        tps ? `TUJUAN PEMBELAJARAN (TP):\n${tps}` : ""
+      ].filter(Boolean).join("\n\n");
+    }
+
+    function bacaJSON(teks) {
+      let clean = String(teks || "").trim();
+      clean = clean.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+      try {
+        return JSON.parse(clean);
+      } catch (e) {
+        const firstBrace = clean.indexOf("{");
+        const firstBracket = clean.indexOf("[");
+        let start = -1;
+        let end = -1;
+        if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
+          start = firstBracket;
+          end = clean.lastIndexOf("]");
+        } else if (firstBrace !== -1) {
+          start = firstBrace;
+          end = clean.lastIndexOf("}");
+        }
+        if (start !== -1 && end !== -1 && end > start) {
+          return JSON.parse(clean.slice(start, end + 1));
+        }
+        throw new Error("Format respons AI bukan JSON yang valid. Silakan coba lagi.");
+      }
+    }
+
+    async function panggilAI(snap, userPrompt, sysPrompt) {
+      const key = (snap.apiKey || "").trim();
+      const model = snap.model || "gemini-3-flash-preview";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+      const payload = {
+        contents: [{ parts: [{ text: userPrompt }] }],
+        systemInstruction: { parts: [{ text: sysPrompt }] },
+        generationConfig: {
+          temperature: 0.7,
+          responseMimeType: "application/json"
+        }
+      };
+
+      let delay = 1000;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const out = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!out) throw new Error("AI tidak mengembalikan konten teks.");
+          return out;
+        }
+        if (res.status === 429 || res.status >= 500) {
+          await new Promise(r => setTimeout(r, delay));
+          delay *= 2;
+          continue;
+        }
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson?.error?.message || `Gagal memanggil Gemini API (HTTP ${res.status})`);
+      }
+      throw new Error("Server AI sedang sibuk setelah beberapa percobaan. Coba lanjutkan beberapa saat lagi.");
+    }
+
+    async function buatBatch(snap, grup, existingSoal) {
+      const opsiN = JENJANG[snap.jenjang]?.opsi || 4;
+      const ringkasanAda = existingSoal.slice(-8).map(q => `No.${q.no}: ${q.soal.slice(0, 70)}`).join("; ");
+      const rincianSlot = grup.map(g =>
+        `- Nomor ${g.no} | Bentuk: ${g.bentuk} (${BENTUK_INFO[g.bentuk].label}) | Level Kognitif: ${g.level} | TP: ${g.tp}`
+      ).join("\n");
+
+      const prompt = `${konteksPrompt(snap)}
+
+${ringkasanAda ? `SOAL YANG SUDAH DIBUAT (hindari pengulangan topik/angka persis): ${ringkasanAda}\n` : ""}
+TUGAS: Susun ${grup.length} butir soal asesmen berkualitas tinggi sesuai kaidah penulisan soal Kurikulum Merdeka & AKM (Asesmen Kompetensi Minimum) untuk slot berikut:
+${rincianSlot}
+
+ATURAN FORMAT JSON (Keluarkan array JSON berisi objek soal dengan properti berikut):
+- "no": number (sesuai nomor slot)
+- "bentuk": string ("pg" | "pgk" | "bs" | "mj" | "is" | "ur")
+- "level": string ("LOTS" | "MOTS" | "HOTS")
+- "tp": string (tujuan pembelajaran yang diukur)
+- "indikator": string (indikator soal operasional: Disajikan..., peserta didik dapat...)
+- "stimulus": string (wacana singkat, tabel teks, atau konteks kehidupan nyata; wajib ada untuk soal HOTS/MOTS, boleh "" jika soal langsung)
+- "soal": string (pokok pertanyaan yang jelas dan lugas dalam Bahasa Indonesia baku)
+- "pembahasan": string (penjelasan langkah penyelesaian / alasan jawaban benar)
+
+KHUSUS TIAP BENTUK:
+1. Jika bentuk = "pg":
+   - "opsi": array berisi tepat ${opsiN} string pilihan jawaban (tanpa huruf A/B/C di depannya)
+   - "kunci": integer indeks jawaban benar (0 sampai ${opsiN - 1})
+2. Jika bentuk = "pgk" (Pilihan Ganda Kompleks - jawaban benar lebih dari satu):
+   - "opsi": array berisi ${opsiN} atau 5 string pilihan jawaban
+   - "kunci": array integer indeks jawaban benar (minimal 2 indeks, misal [0, 2])
+3. Jika bentuk = "bs" (Benar/Salah):
+   - "pernyataan": array berisi 3 objek {"teks": string, "benar": boolean}
+4. Jika bentuk = "mj" (Menjodohkan):
+   - "kiri": array berisi 3 string premis/pertanyaan
+   - "kanan": array berisi 4 string pilihan pasangan (acak urutannya, 1 sebagai pengecoh)
+   - "kunci": array berisi 3 integer indeks pada "kanan" yang menjadi pasangan tepat untuk masing-masing item "kiri"
+5. Jika bentuk = "is" (Isian Singkat):
+   - "kunci": string jawaban singkat yang pasti
+6. Jika bentuk = "ur" (Uraian):
+   - "kunci": string uraian jawaban lengkap
+   - "rubrik": array objek [{"skor": number, "kriteria": string}] dengan total skor maksimal ${snap.skor?.ur || 4}
+
+Keluarkan HANYA array JSON valid.`;
+
+      const raw = await panggilAI(
+        snap,
+        prompt,
+        "Anda adalah penulis soal profesional Kurikulum Merdeka Kemendikdasmen Indonesia. Keluarkan hanya JSON valid tanpa markdown."
+      );
+      let arr = bacaJSON(raw);
+      if (!Array.isArray(arr)) arr = arr.soal || arr.items || Object.values(arr)[0] || [];
+
+      const hasil = [];
+      grup.forEach((slot, idx) => {
+        const item = arr.find(x => Number(x.no) === slot.no) || arr[idx];
+        if (!item || !item.soal) return;
+        const skorDefault = Number(snap.skor?.[slot.bentuk]) || BENTUK_INFO[slot.bentuk].skorDefault;
+        const base = {
+          no: slot.no,
+          bentuk: slot.bentuk,
+          target: slot.level,
+          level: ["LOTS", "MOTS", "HOTS"].includes(String(item.level).toUpperCase()) ? String(item.level).toUpperCase() : slot.level,
+          tp: String(item.tp || slot.tp).trim(),
+          indikator: String(item.indikator || `Disajikan permasalahan kontekstual, peserta didik dapat menyelesaikan soal sesuai TP.`).trim(),
+          stimulus: String(item.stimulus || "").trim(),
+          soal: String(item.soal || "").trim(),
+          pembahasan: String(item.pembahasan || "Sesuai konsep materi yang dipelajari.").trim(),
+          skor: skorDefault
+        };
+
+        if (slot.bentuk === "pg") {
+          const opsi = Array.isArray(item.opsi) && item.opsi.length >= 3 ? item.opsi.map(String) : ["Opsi A", "Opsi B", "Opsi C", "Opsi D"];
+          let k = parseInt(item.kunci, 10);
+          if (isNaN(k) || k < 0 || k >= opsi.length) k = 0;
+          hasil.push({ ...base, opsi, kunci: k });
+        } else if (slot.bentuk === "pgk") {
+          const opsi = Array.isArray(item.opsi) && item.opsi.length >= 3 ? item.opsi.map(String) : ["Pernyataan 1", "Pernyataan 2", "Pernyataan 3", "Pernyataan 4"];
+          let k = Array.isArray(item.kunci) ? item.kunci.map(Number).filter(i => i >= 0 && i < opsi.length) : [0, 1];
+          if (k.length < 2) k = [0, 1];
+          hasil.push({ ...base, opsi, kunci: [...new Set(k)].sort((a, b) => a - b) });
+        } else if (slot.bentuk === "bs") {
+          const pern = Array.isArray(item.pernyataan) && item.pernyataan.length >= 2
+            ? item.pernyataan.map(p => ({ teks: String(p.teks || p), benar: Boolean(p.benar) }))
+            : [{ teks: "Pernyataan pertama sesuai konsep.", benar: true }, { teks: "Pernyataan kedua bertentangan.", benar: false }];
+          hasil.push({ ...base, pernyataan: pern });
+        } else if (slot.bentuk === "mj") {
+          const kiri = Array.isArray(item.kiri) && item.kiri.length >= 2 ? item.kiri.map(String) : ["Premis 1", "Premis 2"];
+          const kanan = Array.isArray(item.kanan) && item.kanan.length >= kiri.length ? item.kanan.map(String) : [...kiri.map((_, i) => `Pasangan ${i + 1}`), "Pengecoh"];
+          const kunci = Array.isArray(item.kunci) && item.kunci.length === kiri.length
+            ? item.kunci.map((v, i) => (Number(v) >= 0 && Number(v) < kanan.length ? Number(v) : i))
+            : kiri.map((_, i) => i);
+          hasil.push({ ...base, kiri, kanan, kunci });
+        } else if (slot.bentuk === "is") {
+          hasil.push({ ...base, kunci: String(item.kunci || "-").trim() });
+        } else {
+          const rubrik = Array.isArray(item.rubrik) && item.rubrik.length
+            ? item.rubrik.map(r => ({ skor: Number(r.skor) || 1, kriteria: String(r.kriteria || "") }))
+            : [
+                { skor: skorDefault, kriteria: "Menjawab lengkap, langkah sistematis, dan hasil akhir tepat." },
+                { skor: Math.ceil(skorDefault / 2), kriteria: "Langkah sebagian tepat namun hasil akhir kurang lengkap." },
+                { skor: 0, kriteria: "Tidak menjawab atau jawaban salah seluruhnya." }
+              ];
+          hasil.push({ ...base, kunci: String(item.kunci || "-").trim(), rubrik });
+        }
+      });
+
+      return { hasil };
+    }
+
+    /* ---- Generator HTML Dokumen (Naskah Soal, Kisi-Kisi, Kunci & Rubrik, Kartu Soal) ---- */
+    const CSSDOK = `
+      body { font-family: 'Times New Roman', Times, serif; font-size: 11.5pt; color: #000; line-height: 1.45; }
+      h1, h2, h3 { margin: 0; padding: 0; }
+      .kop { text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 14px; }
+      .kop-judul { font-size: 14pt; font-weight: bold; text-transform: uppercase; }
+      .kop-sub { font-size: 12pt; font-weight: bold; }
+      .meta-tbl { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 11pt; }
+      .meta-tbl td { border: 1px solid #000; padding: 4px 8px; }
+      .grid-tbl { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 10.5pt; }
+      .grid-tbl th, .grid-tbl td { border: 1px solid #000; padding: 5px 7px; vertical-align: top; }
+      .grid-tbl th { background: #e2e8f0; text-align: center; font-weight: bold; }
+      .stimulus { background: #f8fafc; border: 1px solid #94a3b8; padding: 8px 10px; margin: 6px 0; font-style: normal; }
+      .soal-item { margin-bottom: 14px; page-break-inside: avoid; }
+      .ttd { width: 100%; margin-top: 28px; border-collapse: collapse; }
+      .ttd td { border: none; text-align: center; width: 50%; vertical-align: top; }
+    `;
+
+    function headerDokumen(s, judulDok) {
+      return `
+        <div class="kop">
+          <div class="kop-judul">${esc(judulDok)}</div>
+          <div class="kop-sub">${esc(JENIS[s.jenis]?.nama.toUpperCase())}</div>
+          <div>${esc(s.sekolah)} — TAHUN AJARAN ${esc(s.tahunAjaran)}</div>
+        </div>
+        <table class="meta-tbl">
+          <tr>
+            <td width="18%"><b>Mata Pelajaran</b></td><td width="32%">${esc(namaMapel(s))}</td>
+            <td width="18%"><b>Kelas / Fase</b></td><td width="32%">Kelas ${esc(s.kelas)} / Fase ${esc(faseSaatIni(s))}</td>
+          </tr>
+          <tr>
+            <td><b>Semester</b></td><td>${esc(s.semester)}</td>
+            <td><b>Alokasi Waktu</b></td><td>${esc(s.waktu)} Menit</td>
+          </tr>
+          <tr>
+            <td><b>Penyusun</b></td><td>${esc(s.penyusun)}</td>
+            <td><b>Jumlah Soal</b></td><td>${s.soal.length} Butir (Skor Maks: ${totalSkorMaks(s)})</td>
+          </tr>
+        </table>
+      `;
+    }
+
+    function blokTTD(s) {
+      return `
+        <table class="ttd">
+          <tr>
+            <td>
+              Mengetahui,<br/>Kepala ${esc(s.sekolah)}<br/><br/><br/><br/>
+              <u><b>${esc(s.kepalaSekolah || "........................................")}</b></u><br/>
+              NIP. ${esc(s.nipKepsek || "-")}
+            </td>
+            <td>
+              ${esc(s.tanggal)}<br/>Guru Mata Pelajaran<br/><br/><br/><br/>
+              <u><b>${esc(s.penyusun)}</b></u><br/>
+              NIP. ${esc(s.nip || "-")}
+            </td>
+          </tr>
+        </table>
+      `;
+    }
+
+    function renderNaskahSoal(s) {
+      if (!s.soal.length) return "<p>Belum ada soal yang disusun.</p>";
+      let html = headerDokumen(s, "NASKAH SOAL ASESMEN");
+      html += `<p style="margin-bottom:10px;"><b>Petunjuk Umum:</b> Bacalah doa sebelum mengerjakan. Periksalah kelengkapan naskah soal dan kerjakan butir soal dengan teliti.</p>`;
+      s.soal.forEach(q => {
+        html += `<div class="soal-item">`;
+        html += `<div><b>${q.no}.</b> <span style="font-size:9.5pt;color:#475569;">[${BENTUK_INFO[q.bentuk]?.label}]</span></div>`;
+        if (q.stimulus) html += `<div class="stimulus">${esc(q.stimulus).replace(/\n/g, "<br/>")}</div>`;
+        html += `<div style="margin:4px 0 6px 18px;">${esc(q.soal).replace(/\n/g, "<br/>")}</div>`;
+
+        if (q.bentuk === "pg" || q.bentuk === "pgk") {
+          html += `<div style="margin-left:22px;">`;
+          if (q.bentuk === "pgk") html += `<div style="font-size:9.5pt;font-style:italic;margin-bottom:3px;">(Pilih lebih dari satu jawaban yang benar)</div>`;
+          (q.opsi || []).forEach((op, idx) => {
+            const simbol = q.bentuk === "pgk" ? `&#9744; ${HURUF[idx]}.` : `${HURUF[idx]}.`;
+            html += `<div style="margin-bottom:2px;">${simbol} ${esc(op)}</div>`;
+          });
+          html += `</div>`;
+        } else if (q.bentuk === "bs") {
+          html += `<table class="grid-tbl" style="margin-left:18px;width:calc(100% - 18px);">
+            <tr><th>No</th><th>Pernyataan</th><th width="70">Benar</th><th width="70">Salah</th></tr>
+            ${(q.pernyataan || []).map((p, i) => `<tr><td align="center">${i + 1}</td><td>${esc(p.teks)}</td><td></td><td></td></tr>`).join("")}
+          </table>`;
+        } else if (q.bentuk === "mj") {
+          html += `<table class="grid-tbl" style="margin-left:18px;width:calc(100% - 18px);">
+            <tr><th width="50%">Premis / Pernyataan</th><th width="50%">Pilihan Pasangan</th></tr>
+            ${Array.from({ length: Math.max((q.kiri || []).length, (q.kanan || []).length) }).map((_, i) => `
+              <tr>
+                <td>${q.kiri?.[i] ? `${i + 1}. ${esc(q.kiri[i])}` : ""}</td>
+                <td>${q.kanan?.[i] ? `${HURUF[i]}. ${esc(q.kanan[i])}` : ""}</td>
+              </tr>
+            `).join("")}
+          </table>`;
+        } else if (q.bentuk === "is") {
+          html += `<div style="margin-left:18px;margin-top:6px;">Jawaban: .....................................................................................</div>`;
+        } else if (q.bentuk === "ur") {
+          html += `<div style="margin-left:18px;margin-top:6px;border:1px dashed #94a3b8;height:68px;padding:4px;font-size:9pt;color:#64748b;">Lembar Jawaban Uraian:</div>`;
+        }
+        html += `</div>`;
+      });
+      return html;
+    }
+
+    function renderKisiKisi(s) {
+      if (!s.soal.length) return "<p>Belum ada soal untuk dibuat kisi-kisi.</p>";
+      let html = headerDokumen(s, "KISI-KISI PENULISAN SOAL ASESMEN");
+      html += `<table class="grid-tbl">
+        <thead>
+          <tr>
+            <th width="36">No</th>
+            <th width="24%">Tujuan Pembelajaran (TP)</th>
+            <th width="34%">Indikator Soal</th>
+            <th width="14%">Bentuk Soal</th>
+            <th width="10%">Level</th>
+            <th width="55">Skor</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${s.soal.map(q => `
+            <tr>
+              <td align="center">${q.no}</td>
+              <td>${esc(q.tp)}</td>
+              <td>${esc(q.indikator)}</td>
+              <td align="center">${BENTUK_INFO[q.bentuk]?.label}</td>
+              <td align="center">${esc(q.level)}</td>
+              <td align="center">${q.skor}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>`;
+      html += blokTTD(s);
+      return html;
+    }
+
+    function renderKunciPembahasan(s) {
+      if (!s.soal.length) return "<p>Belum ada kunci jawaban.</p>";
+      let html = headerDokumen(s, "KUNCI JAWABAN, PEMBAHASAN & PEDOMAN PENSKORAN");
+      html += `<table class="grid-tbl">
+        <thead>
+          <tr>
+            <th width="36">No</th>
+            <th width="12%">Bentuk</th>
+            <th width="22%">Kunci Jawaban</th>
+            <th>Pembahasan & Rubrik Penskoran</th>
+            <th width="55">Skor</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${s.soal.map(q => `
+            <tr>
+              <td align="center"><b>${q.no}</b></td>
+              <td align="center">${BENTUK_INFO[q.bentuk]?.kode}</td>
+              <td><b>${esc(kunciTeks(q))}</b></td>
+              <td>
+                <div>${esc(q.pembahasan)}</div>
+                ${q.rubrik ? `<ul style="margin:4px 0 0 16px;padding:0;font-size:9.5pt;">${q.rubrik.map(r => `<li><b>Skor ${r.skor}:</b> ${esc(r.kriteria)}</li>`).join("")}</ul>` : ""}
+              </td>
+              <td align="center">${q.skor}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>`;
+      html += `<p style="margin-top:10px;"><b>Rumus Nilai Akhir:</b> Nilai = (Total Skor Perolehan &divide; ${totalSkorMaks(s)}) &times; 100</p>`;
+      return html;
+    }
+
+    function renderKartuSoal(s) {
+      if (!s.soal.length) return "<p>Belum ada kartu soal.</p>";
+      let html = headerDokumen(s, "KARTU SOAL ASESMEN KURIKULUM MERDEKA");
+      s.soal.forEach(q => {
+        html += `<table class="grid-tbl" style="margin-bottom:14px;page-break-inside:avoid;">
+          <tr>
+            <td width="50%"><b>Satuan Pendidikan:</b> ${esc(s.sekolah)}</td>
+            <td width="50%"><b>Mata Pelajaran:</b> ${esc(namaMapel(s))}</td>
+          </tr>
+          <tr>
+            <td><b>Kelas / Fase:</b> ${esc(s.kelas)} / Fase ${esc(faseSaatIni(s))}</td>
+            <td><b>Nomor Soal / Bentuk:</b> No. ${q.no} (${BENTUK_INFO[q.bentuk]?.label})</td>
+          </tr>
+          <tr>
+            <td><b>Level Kognitif:</b> ${esc(q.level)}</td>
+            <td><b>Kunci & Skor Maks:</b> ${esc(kunciTeks(q))} (Skor: ${q.skor})</td>
+          </tr>
+          <tr>
+            <td colspan="2"><b>Tujuan Pembelajaran:</b> ${esc(q.tp)}</td>
+          </tr>
+          <tr>
+            <td colspan="2"><b>Indikator Soal:</b> ${esc(q.indikator)}</td>
+          </tr>
+          <tr>
+            <td colspan="2">
+              <b>Rumusan Butir Soal:</b><br/>
+              ${q.stimulus ? `<div class="stimulus">${esc(q.stimulus)}</div>` : ""}
+              <div style="margin-top:4px;">${esc(q.soal)}</div>
+            </td>
+          </tr>
+        </table>`;
+      });
+      return html;
+    }
+
+    const DOK = {
+      soal: ["Naskah Soal", renderNaskahSoal],
+      kisi: ["Kisi-Kisi", renderKisiKisi],
+      kunci: ["Kunci & Rubrik", renderKunciPembahasan],
+      kartu: ["Kartu Soal", renderKartuSoal]
+    };
+
+    function unduh(namaFile, parts, mime) {
+      const blob = new Blob(parts, { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = namaFile;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 200);
+    }
+
+    function eksporWord(S, hanya = null) {
+      const isi = hanya
+        ? DOK[hanya][1](S)
+        : Object.keys(DOK)
+            .map((k, idx) => (idx > 0 ? `<br clear="all" style="page-break-before:always" />` : "") + DOK[k][1](S))
+            .join("\n");
+
+      const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Paket Asesmen</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2cm;} ${CSSDOK}</style></head><body>${isi}</body></html>`;
+      const nm = `${JENIS[S.jenis].singkat}_${namaMapel(S)}_Kelas_${S.kelas}${hanya ? "_" + DOK[hanya][0] : ""}`.replace(/[^A-Za-z0-9]+/g, "_") + ".doc";
+      unduh(nm, ["\uFEFF", html], "application/msword");
+    }
+
+    /* ============================================================================
+       4. FIREBASE AUTO-SETUP DATABASE & HYBRID AUTHENTICATION
+       ============================================================================ */
+    const DEMO_GURU_LIST = [
+      { id: "guru_1", username: "guru_sd5", password: "123", nama_lengkap: "Abdul Malik, S.Pd.", unit_sekolah: "SDN Nusantara Cendekia 01", mapel_ampu: "Guru Kelas 5 / Matematika", role: "guru" },
+      { id: "guru_2", username: "guru_ipa", password: "123", nama_lengkap: "Ratna Dewi, M.Pd.", unit_sekolah: "SMP Negeri 1 Cendekia", mapel_ampu: "Ilmu Pengetahuan Alam", role: "guru" }
+    ];
+
+    async function ensureFirebaseAuthSession() {
+      if (!USE_FIREBASE || !fbAuth) return null;
+      if (fbAuth.currentUser) return fbAuth.currentUser;
+      if (typeof __initial_auth_token !== "undefined" && __initial_auth_token) {
+        const cred = await signInWithCustomToken(fbAuth, __initial_auth_token);
+        return cred.user;
+      }
+      const cred = await signInAnonymously(fbAuth);
+      return cred.user;
+    }
+
+    async function autoSetupDatabase() {
+      if (!USE_FIREBASE || !fbDb) return;
+      try {
+        await ensureFirebaseAuthSession();
+        const colGuru = collection(fbDb, "artifacts", APP_ID, "public", "data", "users_guru");
+        const snap = await getDocs(colGuru);
+        if (snap.empty) {
+          for (const g of DEMO_GURU_LIST) {
+            await setDoc(doc(fbDb, "artifacts", APP_ID, "public", "data", "users_guru", g.id), {
+              ...g,
+              created_at: serverTimestamp()
+            });
+          }
+          // Tambahkan 1 contoh paket asesmen awal di Firestore
+          await setDoc(doc(fbDb, "artifacts", APP_ID, "public", "data", "paket_asesmen", "contoh_sts_mtk5"), {
+            pembuat_username: "guru_sd5",
+            nama_penyusun: "Abdul Malik, S.Pd.",
+            satuan_pendidikan: "SDN Nusantara Cendekia 01",
+            jenjang: "SD",
+            kelas: "5",
+            mapel: "Matematika",
+            jenis: "sumatif",
+            waktu: 90,
+            state_json: JSON.stringify(DEF),
+            jumlah_soal: 0,
+            updated_at: new Date().toISOString()
+          });
+        }
+      } catch (err) {
+        console.warn("Auto-setup database dilewati:", err.message);
+      }
+    }
+
+    /* ============================================================================
+       5. STATE MANAGEMENT & REACTIVE UI RENDERER (VANILLA JS MODULAR)
+       ============================================================================ */
+    const muatAwal = () => {
+      try {
+        const r = localStorage.getItem("gsa_canvas");
+        if (r) {
+          const s = Object.assign(JSON.parse(JSON.stringify(DEF)), JSON.parse(r));
+          if (s.step === 4 && !s.soal.length) s.step = 3;
+          return s;
+        }
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(DEF));
+    };
+
+    const muatSessionUser = () => {
+      try {
+        const u = sessionStorage.getItem("gsa_user_session");
+        return u ? JSON.parse(u) : null;
+      } catch (e) {
+        return null;
+      }
+    };
+
+    const store = {
+      S: muatAwal(),
+      user: muatSessionUser(), // { role: 'admin' | 'guru', username, nama_lengkap, unit_sekolah }
+      nav: "generator", // 'dashboard' | 'generator' | 'bank_guru'
+      loginTab: "guru", // 'guru' | 'admin'
+      loginLoading: false,
+      loginError: "",
+      pesan: { jenis: "", teks: "" },
+      status: null,
+      sibuk: false,
+      batal: false,
+      aturModal: false,
+      sunting: null,
+      konfirm: "",
+      cloudPaket: [],
+      guruList: [...DEMO_GURU_LIST],
+      cloudLoading: false,
+      unsubPaket: null,
+      unsubGuru: null
+    };
+
+    function upS(patch) {
+      store.S = { ...store.S, ...(typeof patch === "function" ? patch(store.S) : patch) };
+      try {
+        localStorage.setItem("gsa_canvas", JSON.stringify(store.S));
+      } catch (e) {}
+      render();
+    }
+
+    function setInfo(jenis, teks) {
+      store.pesan = { jenis, teks };
+      render();
+    }
+
+    /* ---- Sinkronisasi Firestore Real-time ---- */
+    async function startFirestoreListeners() {
+      if (!USE_FIREBASE || !fbDb) return;
+      try {
+        await ensureFirebaseAuthSession();
+        if (!store.unsubPaket) {
+          const colPaket = collection(fbDb, "artifacts", APP_ID, "public", "data", "paket_asesmen");
+          store.unsubPaket = onSnapshot(
+            colPaket,
+            (snapshot) => {
+              const items = [];
+              snapshot.forEach(d => items.push({ id: d.id, ...d.data() }));
+              items.sort((a, b) => String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
+              store.cloudPaket = items;
+              render();
+            },
+            (err) => console.warn("Listener paket_asesmen:", err.message)
+          );
+        }
+        if (!store.unsubGuru) {
+          const colGuru = collection(fbDb, "artifacts", APP_ID, "public", "data", "users_guru");
+          store.unsubGuru = onSnapshot(
+            colGuru,
+            (snapshot) => {
+              const list = [];
+              snapshot.forEach(d => list.push({ id: d.id, ...d.data() }));
+              if (list.length) store.guruList = list;
+              render();
+            },
+            (err) => console.warn("Listener users_guru:", err.message)
+          );
+        }
+      } catch (e) {
+        console.warn("Gagal memuat listener Firestore:", e.message);
+      }
+    }
+
+    async function simpanKeCloud() {
+      if (!store.user) {
+        setInfo("warn", "Silakan masuk terlebih dahulu untuk menyimpan ke Cloud.");
+        return;
+      }
+      store.cloudLoading = true;
+      render();
+      const s = store.S;
+      const docPayload = {
+        pembuat_username: store.user.username,
+        nama_penyusun: s.penyusun || store.user.nama_lengkap,
+        satuan_pendidikan: s.sekolah,
+        jenjang: s.jenjang,
+        kelas: s.kelas,
+        mapel: namaMapel(s),
+        jenis: s.jenis,
+        waktu: Number(s.waktu) || 60,
+        jumlah_soal: s.soal.length,
+        state_json: JSON.stringify({ ...s, apiKey: "" }),
+        updated_at: new Date().toISOString()
+      };
+
+      try {
+        if (USE_FIREBASE && fbDb) {
+          await ensureFirebaseAuthSession();
+          const colPaket = collection(fbDb, "artifacts", APP_ID, "public", "data", "paket_asesmen");
+          await addDoc(colPaket, docPayload);
+          setInfo("ok", "Paket asesmen berhasil disimpan ke database Cloud Firebase!");
+        } else {
+          // Mode Preview In-Memory
+          store.cloudPaket.unshift({ id: "local_" + Date.now(), ...docPayload });
+          setInfo("ok", "Tersimpan di daftar riwayat sesi (Mode Preview). Aktifkan Firebase untuk sinkronisasi lintas perangkat.");
+        }
+      } catch (e) {
+        setInfo("err", "Gagal menyimpan ke Cloud: " + e.message);
+      }
+      store.cloudLoading = false;
+      render();
+    }
+
+    function muatPaketDariCloud(item) {
+      try {
+        const parsed = JSON.parse(item.state_json);
+        store.S = {
+          ...JSON.parse(JSON.stringify(DEF)),
+          ...parsed,
+          apiKey: store.S.apiKey,
+          model: store.S.model
+        };
+        store.nav = "generator";
+        setInfo("ok", `Paket "${item.mapel} Kelas ${item.kelas}" berhasil dimuat ke editor.`);
+      } catch (e) {
+        setInfo("err", "Data paket tidak dapat dibaca.");
+      }
+    }
+
+    async function hapusPaketCloud(id) {
+      try {
+        if (USE_FIREBASE && fbDb) {
+          await ensureFirebaseAuthSession();
+          await deleteDoc(doc(fbDb, "artifacts", APP_ID, "public", "data", "paket_asesmen", id));
+        } else {
+          store.cloudPaket = store.cloudPaket.filter(x => x.id !== id);
+        }
+        setInfo("ok", "Paket asesmen dihapus dari daftar.");
+      } catch (e) {
+        setInfo("err", "Gagal menghapus paket: " + e.message);
+      }
+    }
+
+    /* ---- Handler Autentikasi Hybrid (Admin Auth vs Guru Firestore) ---- */
+    async function handleLoginGuru(username, password) {
+      store.loginLoading = true;
+      store.loginError = "";
+      render();
+
+      const uClean = String(username || "").trim().toLowerCase();
+      const pClean = String(password || "").trim();
+
+      try {
+        if (USE_FIREBASE && fbDb) {
+          await ensureFirebaseAuthSession();
+          const colGuru = collection(fbDb, "artifacts", APP_ID, "public", "data", "users_guru");
+          const snap = await getDocs(colGuru);
+          let found = null;
+          snap.forEach(d => {
+            const data = d.data();
+            if (String(data.username || "").toLowerCase() === uClean && String(data.password || "") === pClean) {
+              found = { id: d.id, ...data };
+            }
+          });
+          if (!found) throw new Error("Username atau password guru tidak cocok.");
+          store.user = {
+            role: "guru",
+            username: found.username,
+            nama_lengkap: found.nama_lengkap,
+            unit_sekolah: found.unit_sekolah
+          };
+        } else {
+          // Mode Preview
+          const found = store.guruList.find(
+            g => g.username.toLowerCase() === uClean && g.password === pClean
+          );
+          if (!found) throw new Error("Username atau password salah. Coba: guru_sd5 / 123");
+          store.user = {
+            role: "guru",
+            username: found.username,
+            nama_lengkap: found.nama_lengkap,
+            unit_sekolah: found.unit_sekolah
+          };
+        }
+
+        sessionStorage.setItem("gsa_user_session", JSON.stringify(store.user));
+        upS({
+          penyusun: store.user.nama_lengkap,
+          sekolah: store.user.unit_sekolah || store.S.sekolah
+        });
+        store.nav = "generator";
+        startFirestoreListeners();
+      } catch (err) {
+        store.loginError = err.message;
+      }
+      store.loginLoading = false;
+      render();
+    }
+
+    async function handleLoginAdmin(email, password) {
+      store.loginLoading = true;
+      store.loginError = "";
+      render();
+
+      try {
+        if (USE_FIREBASE && fbAuth) {
+          const cred = await signInWithEmailAndPassword(fbAuth, email.trim(), password);
+          store.user = {
+            role: "admin",
+            username: cred.user.email,
+            nama_lengkap: "Administrator Sekolah",
+            unit_sekolah: store.S.sekolah
+          };
+        } else {
+          // Mode Preview
+          if (email.trim() === "admin@sekolah.id" && password === "admin123") {
+            store.user = {
+              role: "admin",
+              username: "admin@sekolah.id",
+              nama_lengkap: "Administrator Sekolah (Preview)",
+              unit_sekolah: store.S.sekolah
+            };
+          } else {
+            throw new Error("Mode Preview: gunakan admin@sekolah.id / admin123 atau hubungkan Firebase Auth.");
+          }
+        }
+        sessionStorage.setItem("gsa_user_session", JSON.stringify(store.user));
+        store.nav = "dashboard";
+        startFirestoreListeners();
+      } catch (err) {
+        store.loginError = err.message;
+      }
+      store.loginLoading = false;
+      render();
+    }
+
+    async function handleLogout() {
+      store.user = null;
+      sessionStorage.removeItem("gsa_user_session");
+      if (USE_FIREBASE && fbAuth) {
+        try {
+          await signOut(fbAuth);
+        } catch (e) {}
+      }
+      render();
+    }
+
+    /* ---- Handler Proses AI & Sunting Soal ---- */
+    async function buatSemua(lanjut = false) {
+      if (store.sibuk) return;
+      store.sibuk = true;
+      store.batal = false;
+      store.pesan = { jenis: "", teks: "" };
+
+      let soal = lanjut ? [...store.S.soal] : [];
+      upS({ step: 4, tab: "soal", soal });
+
+      const snap = { ...store.S, soal };
+      const rencana = rancangSlot(snap);
+      const ada = new Set(soal.map(q => q.no));
+      const antre = rencana.filter(s => !ada.has(s.no));
+      const UK = 5;
+      let galat = "";
+
+      try {
+        for (let i = 0; i < antre.length; i += UK) {
+          if (store.batal) break;
+          const grup = antre.slice(i, i + UK);
+          store.status = {
+            teks: `Menyusun soal nomor ${grup[0].no}–${grup[grup.length - 1].no} dari ${rencana.length} butir…`,
+            frac: soal.length / rencana.length
+          };
+          render();
+          const { hasil } = await buatBatch(snap, grup, soal);
+          soal = soal.concat(hasil).sort((a, b) => a.no - b.no);
+          snap.soal = soal;
+          upS({ soal });
+        }
+      } catch (e) {
+        galat = e.message;
+      }
+
+      store.sibuk = false;
+      store.status = null;
+      const kurang = rencana.length - soal.length;
+      if (galat) {
+        setInfo("err", galat + (soal.length ? ' Soal yang sudah jadi tetap tersimpan; tekan "Lanjutkan yang belum" untuk meneruskan.' : ""));
+      } else if (store.batal) {
+        setInfo("warn", `Proses dihentikan. ${soal.length} dari ${rencana.length} soal sudah jadi.`);
+      } else if (kurang > 0) {
+        setInfo("warn", `${kurang} soal belum berhasil dibuat. Tekan "Lanjutkan yang belum" untuk mencoba lagi.`);
+      } else {
+        setInfo("ok", `Selesai: ${soal.length} butir soal & perangkat asesmen berhasil disusun!`);
+      }
+    }
+
+    async function gantiSoal(no) {
+      if (store.sibuk) return;
+      const snap = { ...store.S };
+      const lama = snap.soal.find(q => q.no === no);
+      if (!lama) return;
+      const slot = rancangSlot(snap).find(s => s.no === no && s.bentuk === lama.bentuk) || {
+        no,
+        bentuk: lama.bentuk,
+        level: lama.target || "MOTS",
+        tp: lama.tp
+      };
+      store.sibuk = true;
+      store.status = { teks: `Menyusun ulang soal nomor ${no}…`, frac: null };
+      store.pesan = { jenis: "", teks: "" };
+      render();
+
+      try {
+        const { hasil } = await buatBatch(snap, [slot], snap.soal);
+        if (hasil.length) {
+          upS(p => ({ soal: p.soal.map(q => (q.no === no ? hasil[0] : q)) }));
+          setInfo("ok", `Soal nomor ${no} berhasil diperbarui.`);
+        } else {
+          setInfo("warn", "Soal pengganti gagal dibuat. Silakan coba lagi.");
+        }
+      } catch (e) {
+        setInfo("err", e.message);
+      }
+      store.sibuk = false;
+      store.status = null;
+      render();
+    }
+
+    async function sarankanTP() {
+      if (store.sibuk) return;
+      const snap = store.S;
+      if (!cpTerpilih(snap).length && !snap.materi.trim()) {
+        setInfo("warn", "Pilih elemen CP atau isi materi pokok terlebih dahulu.");
+        return;
+      }
+      store.sibuk = true;
+      store.status = { teks: "Merumuskan Tujuan Pembelajaran (TP) dari CP…", frac: null };
+      store.pesan = { jenis: "", teks: "" };
+      render();
+
+      try {
+        const prompt = `${konteksPrompt(snap)}
+
+TUGAS: Rumuskan tujuan pembelajaran (TP) yang terukur untuk ${JENIS[snap.jenis].nama} ini, diturunkan dari CP${snap.materi.trim() ? " dan difokuskan pada materi pokok yang disebutkan" : ""}. Tiap TP memuat kompetensi (kata kerja operasional) dan lingkup materi dalam satu kalimat. Jumlah: ${snap.jenis === "formatif" ? "2–4" : snap.jenis === "sumatif" ? "3–6" : "6–8"} TP.
+Keluarkan JSON: array string.`;
+        const t = await panggilAI(snap, prompt, "Anda ahli kurikulum Indonesia. Keluarkan hanya array JSON string yang sah.");
+        let a = bacaJSON(t);
+        if (!Array.isArray(a)) a = a.tp || a.tujuan || Object.values(a)[0];
+        const teksTP = a
+          .map((x, i) => `${i + 1}. ` + String(typeof x === "object" ? x.tp || x.teks || Object.values(x)[0] : x).trim())
+          .filter(Boolean)
+          .join("\n");
+        upS({ tp: teksTP });
+        setInfo("ok", "TP berhasil dirumuskan dari CP! Silakan sesuaikan jika perlu.");
+      } catch (e) {
+        setInfo("err", e.message);
+      }
+      store.sibuk = false;
+      store.status = null;
+      render();
+    }
+
+    function bukaSunting(no) {
+      const q = store.S.soal.find(x => x.no === no);
+      if (!q) return;
+      const f = {
+        no,
+        bentuk: q.bentuk,
+        stimulus: q.stimulus,
+        soal: q.soal,
+        pembahasan: q.pembahasan,
+        indikator: q.indikator,
+        level: q.level,
+        skor: q.skor,
+        galat: ""
+      };
+      if (q.bentuk === "pg" || q.bentuk === "pgk") {
+        f.opsi = (q.opsi || []).join("\n");
+        f.kunci = kunciTeks(q);
+      } else if (q.bentuk === "bs") {
+        f.pern = (q.pernyataan || []).map(p => (p.benar ? "B|" : "S|") + p.teks).join("\n");
+      } else if (q.bentuk === "mj") {
+        f.pas = (q.kiri || []).map((k, i) => k + " | " + q.kanan[q.kunci[i]]).join("\n");
+        f.peng = (q.kanan || []).filter((_, i) => !q.kunci.includes(i)).join("\n");
+      } else {
+        f.kunci = q.kunci;
+      }
+      store.sunting = f;
+      render();
+    }
+
+    function simpanSunting() {
+      const f = store.sunting;
+      const q = store.S.soal.find(x => x.no === f.no);
+      const g = t => {
+        store.sunting = { ...f, galat: t };
+        render();
+      };
+      const baris = v => String(v || "").split("\n").map(s => s.trim()).filter(Boolean);
+      const n = {
+        ...q,
+        stimulus: f.stimulus.trim(),
+        soal: f.soal.trim(),
+        pembahasan: f.pembahasan.trim(),
+        indikator: f.indikator.trim(),
+        level: f.level,
+        skor: Number(f.skor) || q.skor
+      };
+      if (!n.soal) return g("Pokok soal tidak boleh kosong.");
+
+      if (q.bentuk === "pg" || q.bentuk === "pgk") {
+        const o = baris(f.opsi);
+        if (o.length < 3) return g("Minimal 3 pilihan jawaban.");
+        const k = [...new Set(String(f.kunci).toUpperCase().split(/[^A-H]+/).filter(Boolean).map(h => HURUF.indexOf(h)))].sort((a, b) => a - b);
+        if (!k.length || k.some(i => i < 0 || i >= o.length)) return g("Kunci harus berupa huruf pilihan yang tersedia (misal: A atau A, C).");
+        if (q.bentuk === "pg" && k.length !== 1) return g("Pilihan ganda hanya punya satu kunci.");
+        if (q.bentuk === "pgk" && (k.length < 2 || k.length >= o.length)) return g("Pilihan ganda kompleks perlu minimal dua kunci dan tidak semua pilihan.");
+        n.opsi = o;
+        n.kunci = q.bentuk === "pg" ? k[0] : k;
+      } else if (q.bentuk === "bs") {
+        const p = baris(f.pern).map(s => {
+          const m = s.match(/^([BS])\s*\|\s*(.+)$/i);
+          return m ? { benar: m[1].toUpperCase() === "B", teks: m[2].trim() } : null;
+        });
+        if (p.length < 2 || p.some(x => !x)) return g("Setiap baris pernyataan harus diawali B| atau S|.");
+        n.pernyataan = p;
+      } else if (q.bentuk === "mj") {
+        const ps = baris(f.pas).map(s => s.split("|").map(x => x.trim()));
+        if (ps.length < 2 || ps.some(x => x.length !== 2 || !x[0] || !x[1])) return g("Setiap baris harus berformat: premis kiri | jawaban kanan.");
+        const kanan = ps.map(x => x[1]).concat(baris(f.peng));
+        const urut = acak(kanan);
+        n.kiri = ps.map(x => x[0]);
+        n.kanan = urut.map(i => kanan[i]);
+        n.kunci = ps.map((_, i) => urut.indexOf(i));
+      } else {
+        n.kunci = String(f.kunci).trim();
+        if (!n.kunci) return g("Kunci jawaban tidak boleh kosong.");
+        if (q.bentuk === "ur" && n.skor !== q.skor && q.rubrik) {
+          const mx = Math.max(...q.rubrik.map(r => r.skor)) || 1;
+          n.rubrik = q.rubrik.map(r => ({
+            skor: Math.round((r.skor * n.skor) / mx * 10) / 10,
+            kriteria: r.kriteria
+          }));
+        }
+      }
+
+      store.sunting = null;
+      upS(p => ({ soal: p.soal.map(x => (x.no === f.no ? n : x)) }));
+      setInfo("ok", `Butir soal nomor ${f.no} berhasil diperbarui.`);
+    }
+
+    function cetakDokumen() {
+      const w = window.open("", "_blank");
+      if (!w) {
+        setInfo("warn", "Jendela cetak diblokir browser. Gunakan tombol Ekspor Word (.doc) lalu cetak dari Word.");
+        return;
+      }
+      w.document.write(`<html><head><meta charset="utf-8"><title>${esc(DOK[store.S.tab][0])}</title><style>@page{margin:1.8cm;} ${CSSDOK}</style></head><body>${DOK[store.S.tab][1](store.S)}</body></html>`);
+      w.document.close();
+      setTimeout(() => w.print(), 300);
+    }
+
+    /* ============================================================================
+       6. KOMPONEN IKON SVG (LUCIDE / CLEAN STROKE)
+       ============================================================================ */
+    const ico = {
+      logo: `<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="m9 15 2 2 4-4"/></svg>`,
+      dash: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>`,
+      spark: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`,
+      users: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+      gear: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+      word: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+      print: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>`,
+      cloud: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>`,
+      edit: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+      refresh: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`,
+      logout: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+      ig: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`,
+      yt: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 17a24.1 24.1 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.6 49.6 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.1 24.1 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.6 49.6 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>`,
+      tt: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>`
+    };
+
+    /* ============================================================================
+       7. RENDER HALAMAN LOGIN HYBRID (ADMIN & GURU)
+       ============================================================================ */
+    function renderLoginScreen() {
+      const isGuru = store.loginTab === "guru";
+      return `
+        <div class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-100 via-white to-amber-50/40">
+          <div class="w-full max-w-md glass-panel rounded-3xl shadow-xl p-7 sm:p-8 border border-slate-200/80">
+            <!-- Header Brand -->
+            <div class="flex items-center gap-3.5 mb-6">
+              <div class="w-12 h-12 rounded-2xl bg-navy-800 text-amber-400 flex items-center justify-center shadow-md">
+                ${ico.logo}
+              </div>
+              <div>
+                <h1 class="text-xl font-extrabold text-navy-900 tracking-tight">AsesmenPro <span class="text-amber-500">AI</span></h1>
+                <p class="text-xs font-medium text-slate-500">Generator Paket Soal & Kisi-Kisi Kurikulum Merdeka</p>
+              </div>
+            </div>
+
+            <!-- Switcher Hybrid Login -->
+            <div class="grid grid-cols-2 gap-1.5 p-1.5 bg-slate-100 rounded-2xl mb-6">
+              <button type="button" data-action="switch-login" data-tab="guru"
+                class="py-2.5 px-3 rounded-xl text-xs font-extrabold transition-all ${isGuru ? "bg-white text-navy-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}">
+                Masuk Guru / Penyusun
+              </button>
+              <button type="button" data-action="switch-login" data-tab="admin"
+                class="py-2.5 px-3 rounded-xl text-xs font-extrabold transition-all ${!isGuru ? "bg-white text-navy-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}">
+                Admin Sekolah
+              </button>
+            </div>
+
+            ${store.loginError ? `
+              <div class="mb-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                ${esc(store.loginError)}
+              </div>
+            ` : ""}
+
+            ${isGuru ? `
+              <form id="form-login-guru" class="space-y-4">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Username / ID Guru</label>
+                  <input type="text" name="username" required value="guru_sd5" placeholder="Contoh: guru_sd5"
+                    class="w-full mt-1.5 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 focus:border-navy-800 focus:bg-white outline-none transition-all" />
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Kata Sandi</label>
+                  <input type="password" name="password" required value="123" placeholder="••••••••"
+                    class="w-full mt-1.5 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 focus:border-navy-800 focus:bg-white outline-none transition-all" />
+                </div>
+                <button type="submit" ${store.loginLoading ? "disabled" : ""}
+                  class="w-full bg-navy-800 hover:bg-navy-900 text-white py-3.5 rounded-xl font-extrabold text-sm shadow-lg shadow-navy-800/20 transition-all flex items-center justify-center gap-2">
+                  ${store.loginLoading ? "Memverifikasi Akun..." : "Masuk ke Ruang Kerja Guru"}
+                </button>
+                <div class="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/70 text-xs text-slate-600">
+                  <span class="font-bold text-navy-800">Akun Demo Otomatis:</span><br/>
+                  Username: <code class="font-bold text-amber-700">guru_sd5</code> &bull; Sandi: <code class="font-bold text-amber-700">123</code>
+                </div>
+              </form>
+            ` : `
+              <form id="form-login-admin" class="space-y-4">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Email Administrator (Firebase Auth)</label>
+                  <input type="email" name="email" required value="admin@sekolah.id" placeholder="admin@sekolah.id"
+                    class="w-full mt-1.5 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 focus:border-navy-800 focus:bg-white outline-none transition-all" />
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Password Admin</label>
+                  <input type="password" name="password" required value="admin123" placeholder="••••••••"
+                    class="w-full mt-1.5 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 focus:border-navy-800 focus:bg-white outline-none transition-all" />
+                </div>
+                <button type="submit" ${store.loginLoading ? "disabled" : ""}
+                  class="w-full bg-amber-500 hover:bg-amber-600 text-white py-3.5 rounded-xl font-extrabold text-sm shadow-lg shadow-amber-500/25 transition-all">
+                  ${store.loginLoading ? "Autentikasi Admin..." : "Masuk Panel Administrator"}
+                </button>
+                <p class="text-[11px] text-slate-400 text-center">
+                  ${USE_FIREBASE ? "Terhubung ke Firebase Authentication." : "Mode Preview aktif (demo: admin@sekolah.id / admin123)."}
+                </p>
+              </form>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    /* ============================================================================
+       8. RENDER HALAMAN UTAMA (SIDEBAR DESKTOP + BOTTOM NAV MOBILE + 4-STEP GENERATOR)
+       ============================================================================ */
+    function renderAlertBar() {
+      const p = store.pesan;
+      if (!p.teks && !store.status) return "";
+      const mapCls = {
+        ok: "bg-emerald-50 border-emerald-200 text-emerald-800",
+        warn: "bg-amber-50 border-amber-200 text-amber-800",
+        err: "bg-rose-50 border-rose-200 text-rose-800"
+      };
+      return `
+        <div class="mb-5 space-y-2.5">
+          ${store.status ? `
+            <div class="p-4 rounded-2xl bg-navy-800 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
+                <div>
+                  <div class="text-xs font-extrabold text-amber-300 uppercase tracking-wider">AI Sedang Menyusun Paket</div>
+                  <div class="text-sm font-semibold">${esc(store.status.teks)}</div>
+                </div>
+              </div>
+              <button type="button" data-action="batal-ai" class="px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-bold self-start sm:self-auto">
+                Hentikan
+              </button>
+            </div>
+          ` : ""}
+          ${p.teks ? `
+            <div class="p-4 rounded-2xl border ${mapCls[p.jenis] || mapCls.ok} flex items-center justify-between gap-3 text-sm font-semibold">
+              <span>${esc(p.teks)}</span>
+              <button type="button" data-action="tutup-pesan" class="text-xs font-black opacity-60 hover:opacity-100 px-2 py-1">✕</button>
+            </div>
+          ` : ""}
+        </div>
+      `;
+    }
+
+    function renderDashboardView() {
+      const paketSaya = store.user.role === "admin"
+        ? store.cloudPaket
+        : store.cloudPaket.filter(p => p.pembuat_username === store.user.username);
+
+      return `
+        <div class="space-y-6">
+          <!-- Hero Banner -->
+          <div class="rounded-3xl bg-gradient-to-r from-navy-900 via-navy-800 to-navy-700 text-white p-6 sm:p-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <span class="inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-extrabold tracking-wide mb-2">
+                Kurikulum Merdeka &bull; ${USE_FIREBASE ? "Cloud Firebase Aktif" : "Mode Preview"}
+              </span>
+              <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Selamat Datang, ${esc(store.user.nama_lengkap)}</h2>
+              <p class="text-slate-300 text-sm mt-1 max-w-xl">
+                Susun naskah soal, kisi-kisi, kunci jawaban, rubrik penskoran, dan kartu soal dalam satu paket siap cetak atau ekspor ke Microsoft Word.
+              </p>
+            </div>
+            <button type="button" data-action="nav-go" data-nav="generator"
+              class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3.5 rounded-2xl font-extrabold text-sm shadow-lg shadow-amber-500/30 flex items-center gap-2 shrink-0 self-start md:self-auto transition-all">
+              ${ico.spark} <span>Buat Paket Soal Baru</span>
+            </button>
+          </div>
+
+          <!-- Ringkasan Statistik -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass-panel rounded-2xl p-5">
+              <div class="text-xs font-bold text-slate-400 uppercase">Paket Tersimpan</div>
+              <div class="text-2xl font-extrabold text-navy-900 mt-1">${paketSaya.length}</div>
+              <div class="text-xs text-slate-500 mt-1">Dokumen di Cloud</div>
+            </div>
+            <div class="glass-panel rounded-2xl p-5">
+              <div class="text-xs font-bold text-slate-400 uppercase">Draft Aktif</div>
+              <div class="text-2xl font-extrabold text-amber-600 mt-1">${store.S.soal.length} Butir</div>
+              <div class="text-xs text-slate-500 mt-1">${esc(namaMapel(store.S))} Kls ${esc(store.S.kelas)}</div>
+            </div>
+            <div class="glass-panel rounded-2xl p-5">
+              <div class="text-xs font-bold text-slate-400 uppercase">Akun Guru Terdaftar</div>
+              <div class="text-2xl font-extrabold text-navy-900 mt-1">${store.guruList.length}</div>
+              <div class="text-xs text-slate-500 mt-1">Database Sekolah</div>
+            </div>
+            <div class="glass-panel rounded-2xl p-5">
+              <div class="text-xs font-bold text-slate-400 uppercase">Format Output</div>
+              <div class="text-2xl font-extrabold text-emerald-600 mt-1">4 Dokumen</div>
+              <div class="text-xs text-slate-500 mt-1">Soal, Kisi, Kunci, Kartu</div>
+            </div>
+          </div>
+
+          <!-- Daftar Paket Asesmen di Cloud -->
+          <div class="glass-panel rounded-3xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-lg font-extrabold text-navy-900">Arsip Paket Asesmen Cloud</h3>
+                <p class="text-xs text-slate-500">Klik "Buka di Editor" untuk menyunting atau mengekspor ulang ke Word.</p>
+              </div>
+              <button type="button" data-action="simpan-cloud" class="bg-slate-100 hover:bg-slate-200 text-navy-800 px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2">
+                ${ico.cloud} <span>Simpan Draft Saat Ini</span>
+              </button>
+            </div>
+
+            ${paketSaya.length === 0 ? `
+              <div class="text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl">
+                <p class="text-sm font-bold text-slate-600">Belum ada paket asesmen yang tersimpan di Cloud.</p>
+                <p class="text-xs text-slate-400 mt-1">Buat soal di menu Generator lalu tekan tombol "Simpan ke Cloud".</p>
+              </div>
+            ` : `
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                ${paketSaya.map(item => `
+                  <div class="p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-navy-700/40 transition-all flex flex-col justify-between gap-3">
+                    <div>
+                      <div class="flex items-center justify-between gap-2">
+                        <span class="px-2.5 py-0.5 rounded-lg bg-navy-800/10 text-navy-800 text-[11px] font-extrabold">
+                          ${esc(JENIS[item.jenis]?.singkat || "ASESMEN")} &bull; ${esc(item.jenjang)} Kls ${esc(item.kelas)}
+                        </span>
+                        <span class="text-[11px] font-semibold text-slate-400">${esc(String(item.updated_at || "").slice(0, 10))}</span>
+                      </div>
+                      <h4 class="text-base font-extrabold text-slate-800 mt-2">${esc(item.mapel)}</h4>
+                      <p class="text-xs text-slate-500 mt-0.5">Penyusun: ${esc(item.nama_penyusun)} &bull; ${item.jumlah_soal || 0} Butir Soal</p>
+                    </div>
+                    <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+                      <button type="button" data-action="muat-cloud" data-id="${esc(item.id)}"
+                        class="flex-1 bg-navy-800 hover:bg-navy-900 text-white py-2 px-3 rounded-xl text-xs font-bold transition-all">
+                        Buka di Editor
+                      </button>
+                      <button type="button" data-action="hapus-cloud" data-id="${esc(item.id)}"
+                        class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold">
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBankGuruView() {
+      const isAdmin = store.user.role === "admin";
+      return `
+        <div class="space-y-6">
+          <div class="glass-panel rounded-3xl p-6">
+            <h2 class="text-xl font-extrabold text-navy-900">Manajemen Akun Guru & Pengaturan AI</h2>
+            <p class="text-xs text-slate-500 mt-1">Kelola akses guru penyusun soal serta konfigurasi API Key Gemini AI.</p>
+
+            <!-- Pengaturan API Key Gemini -->
+            <div class="mt-6 p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-extrabold text-navy-800">Konfigurasi Mesin Gemini AI</h3>
+                <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-bold">Model: ${esc(store.S.model)}</span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Gemini API Key (Opsional di Canvas)</label>
+                  <input type="password" data-bind="apiKey" value="${esc(store.S.apiKey)}" placeholder="Kosongkan jika memakai kunci bawaan lingkungan"
+                    class="w-full mt-1 bg-white border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:border-navy-800 outline-none" />
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Pilih Model AI</label>
+                  <select data-bind="model" class="w-full mt-1 bg-white border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:border-navy-800 outline-none">
+                    <option value="gemini-3-flash-preview" ${store.S.model === "gemini-3-flash-preview" ? "selected" : ""}>Gemini 3 Flash Preview (Cepat & Akurat)</option>
+                    <option value="gemini-2.5-flash" ${store.S.model === "gemini-2.5-flash" ? "selected" : ""}>Gemini 2.5 Flash</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Tambah Akun Guru (Khusus Admin) -->
+            ${isAdmin ? `
+              <form id="form-tambah-guru" class="mt-6 p-5 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-4">
+                <h3 class="text-sm font-extrabold text-navy-900">+ Daftarkan Akun Guru Baru ke Firestore</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <input type="text" name="nama_lengkap" required placeholder="Nama Lengkap & Gelar" class="bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold" />
+                  <input type="text" name="username" required placeholder="Username Login (cth: guru_ipa2)" class="bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold" />
+                  <input type="text" name="password" required placeholder="Kata Sandi" class="bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold" />
+                  <button type="submit" class="bg-navy-800 hover:bg-navy-900 text-white rounded-xl px-4 py-2.5 text-xs font-extrabold">
+                    Simpan Akun Guru
+                  </button>
+                </div>
+              </form>
+            ` : `
+              <div class="mt-4 p-3.5 rounded-2xl bg-blue-50 text-blue-800 text-xs font-semibold">
+                Anda masuk sebagai <b>Guru</b>. Penambahan akun guru baru hanya dapat dilakukan oleh akun <b>Admin Sekolah</b>.
+              </div>
+            `}
+
+            <!-- Tabel Daftar Guru -->
+            <div class="mt-6 overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-[11px] font-extrabold text-slate-400 uppercase">
+                    <th class="py-3 px-3">Nama Guru</th>
+                    <th class="py-3 px-3">Username</th>
+                    <th class="py-3 px-3">Unit Sekolah</th>
+                    <th class="py-3 px-3">Peran</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                  ${store.guruList.map(g => `
+                    <tr>
+                      <td class="py-3 px-3 font-bold text-slate-800">${esc(g.nama_lengkap)}</td>
+                      <td class="py-3 px-3"><code class="px-2 py-0.5 rounded bg-slate-100 text-xs font-bold text-navy-800">${esc(g.username)}</code></td>
+                      <td class="py-3 px-3 text-xs text-slate-500">${esc(g.unit_sekolah || "-")}</td>
+                      <td class="py-3 px-3"><span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">Guru Aktif</span></td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderGeneratorView() {
+      const S = store.S;
+      const mapelList = daftarMapel(S.jenjang, S.kelas);
+      const cpList = cpData(S);
+      const totSoal = totalSoal(S);
+      const ok1 = S.sekolah.trim() !== "" && namaMapel(S).trim() !== "" && +S.waktu > 0;
+      const ok2 = cpTerpilih(S).length > 0 || daftarTP(S).length > 0 || S.materi.trim() !== "";
+      const ok3 = totSoal > 0;
+
+      const steps = [
+        { n: 1, title: "Identitas" },
+        { n: 2, title: "CP & Tujuan (TP)" },
+        { n: 3, title: "Komposisi Soal" },
+        { n: 4, title: "Hasil & Ekspor" }
+      ];
+
+      return `
+        <div class="space-y-6">
+          <!-- Stepper Navigation -->
+          <div class="glass-panel rounded-3xl p-3 sm:p-4">
+            <div class="grid grid-cols-4 gap-2">
+              ${steps.map(st => {
+                const active = S.step === st.n;
+                const done = S.step > st.n;
+                return `
+                  <button type="button" data-action="ke-langkah" data-step="${st.n}"
+                    class="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 py-2.5 px-2 rounded-2xl text-xs font-extrabold transition-all ${
+                      active
+                        ? "bg-navy-800 text-white shadow-md"
+                        : done
+                        ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                        : "bg-slate-50 text-slate-500 hover:bg-slate-100"
+                    }">
+                    <span class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black ${
+                      active ? "bg-amber-500 text-white" : done ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600"
+                    }">${done ? "✓" : st.n}</span>
+                    <span class="text-center leading-tight">${st.title}</span>
+                  </button>
+                `;
+              }).join("")}
+            </div>
+          </div>
+
+          <!-- LANGKAH 1: IDENTITAS ASESMEN -->
+          ${S.step === 1 ? `
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 space-y-6">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+                <div>
+                  <h2 class="text-xl font-extrabold text-navy-900">1. Identitas Satuan Pendidikan & Asesmen</h2>
+                  <p class="text-xs text-slate-500">Data ini otomatis dicantumkan pada kop naskah soal, kisi-kisi, dan kartu soal.</p>
+                </div>
+                <span class="px-3 py-1 rounded-xl bg-amber-50 text-amber-700 text-xs font-extrabold self-start">
+                  Fase ${esc(faseSaatIni(S))} &bull; ${JENJANG[S.jenjang]?.opsi} Pilihan Ganda
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Nama Satuan Pendidikan *</label>
+                  <input type="text" data-bind="sekolah" value="${esc(S.sekolah)}" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-2.5 font-semibold text-slate-800 focus:border-blue-500 focus:bg-white outline-none" />
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Nama Guru Penyusun *</label>
+                  <input type="text" data-bind="penyusun" value="${esc(S.penyusun)}" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-2.5 font-semibold text-slate-800 focus:border-blue-500 focus:bg-white outline-none" />
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">NIP Guru Penyusun</label>
+                  <input type="text" data-bind="nip" value="${esc(S.nip)}" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-2.5 font-semibold text-slate-800 focus:border-blue-500 focus:bg-white outline-none" />
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Nama Kepala Sekolah</label>
+                  <input type="text" data-bind="kepalaSekolah" value="${esc(S.kepalaSekolah)}" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-2.5 font-semibold text-slate-800 focus:border-blue-500 focus:bg-white outline-none" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Jenjang</label>
+                  <select data-action="ganti-jenjang" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-xl px-3.5 py-2.5 font-semibold text-slate-800 focus:border-blue-500 focus:bg-white outline-none">
+                    ${Object.keys(JENJANG).map(j => `<option value="${j}" ${S.jenjang === j ? "selected" : ""}>${JENJANG[j].nama}</option>`).join("")}
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Kelas</label>
+                  <select data-action="ganti-kelas" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-xl px-3.5 py-2.5 font-semibold text-slate-800 focus:border-blue-500 focus:bg-white outline-none">
+                    ${JENJANG[S.jenjang].kelas.map(k => `<option value="${k}" ${String(S.kelas) === String(k) ? "selected" : ""}>Kelas ${k}</option>`).join("")}
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Semester</label>
+                  <select data-bind="semester" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-xl px-3.5 py-2.5 font-semibold text-slate-800 focus:border-blue-500 focus:bg-white outline-none">
+                    <option value="Ganjil" ${S.semester === "Ganjil" ? "selected" : ""}>Ganjil</option>
+                    <option value="Genap" ${S.semester === "Genap" ? "selected" : ""}>Genap</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Alokasi Waktu (Menit)</label>
+                  <input type="number" min="15" max="240" data-bind="waktu" value="${esc(S.waktu)}" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-xl px-3.5 py-2.5 font-semibold text-slate-800 focus:border-blue-500 focus:bg-white outline-none" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Mata Pelajaran *</label>
+                  <select data-action="ganti-mapel" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-2.5 font-semibold text-slate-800 focus:border-blue-500 focus:bg-white outline-none">
+                    ${mapelList.map(m => `<option value="${esc(m)}" ${S.mapel === m ? "selected" : ""}>${esc(m)}</option>`).join("")}
+                    <option value="__lain" ${S.mapel === "__lain" ? "selected" : ""}>+ Mata Pelajaran Lainnya...</option>
+                  </select>
+                  ${S.mapel === "__lain" ? `
+                    <input type="text" data-bind="mapelLain" value="${esc(S.mapelLain)}" placeholder="Ketik nama mata pelajaran..."
+                      class="w-full mt-2 bg-white border-2 border-amber-300 rounded-xl px-4 py-2 font-semibold text-slate-800 outline-none" />
+                  ` : ""}
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Jenis Asesmen</label>
+                  <select data-bind="jenis" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-2.5 font-semibold text-slate-800 focus:border-blue-500 focus:bg-white outline-none">
+                    ${Object.keys(JENIS).map(k => `<option value="${k}" ${S.jenis === k ? "selected" : ""}>${JENIS[k].nama}</option>`).join("")}
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex justify-end pt-4 border-t border-slate-100">
+                <button type="button" data-action="ke-langkah" data-step="2" ${!ok1 ? "disabled" : ""}
+                  class="bg-navy-800 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 disabled:opacity-40 transition-all">
+                  <span>Lanjut ke CP & Tujuan Pembelajaran</span> &rarr;
+                </button>
+              </div>
+            </div>
+          ` : ""}
+
+          <!-- LANGKAH 2: CP, MATERI & TUJUAN PEMBELAJARAN -->
+          ${S.step === 2 ? `
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 space-y-6">
+              <div class="border-b border-slate-100 pb-4">
+                <h2 class="text-xl font-extrabold text-navy-900">2. Capaian Pembelajaran (CP) & Tujuan Pembelajaran (TP)</h2>
+                <p class="text-xs text-slate-500">Pilih elemen CP Kurikulum Merdeka dan rumuskan TP sebagai dasar pembuatan kisi-kisi soal.</p>
+              </div>
+
+              ${cpList ? `
+                <div>
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block mb-2">
+                    Elemen Capaian Pembelajaran — ${esc(namaMapel(S))} (Fase ${esc(faseSaatIni(S))})
+                  </label>
+                  <div class="space-y-2.5">
+                    ${cpList.map((item, idx) => {
+                      const checked = (S.cpSel || []).includes(idx);
+                      return `
+                        <label class="flex items-start gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
+                          checked ? "border-navy-800 bg-navy-800/5" : "border-slate-100 bg-slate-50 hover:bg-white"
+                        }">
+                          <input type="checkbox" data-action="toggle-cp" data-idx="${idx}" ${checked ? "checked" : ""} class="mt-1 w-4 h-4 accent-navy-800" />
+                          <div class="text-xs leading-relaxed">
+                            <span class="font-extrabold text-navy-800 uppercase">${esc(item.kode)}:</span>
+                            <span class="text-slate-700 font-medium">${esc(item.teks)}</span>
+                          </div>
+                        </label>
+                      `;
+                    }).join("")}
+                  </div>
+                </div>
+              ` : `
+                <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-800 font-semibold">
+                  Bank CP bawaan untuk mata pelajaran <b>${esc(namaMapel(S))}</b> belum tersedia. Silakan isi <b>Materi Pokok</b> dan <b>Tujuan Pembelajaran (TP)</b> secara langsung di bawah ini.
+                </div>
+              `}
+
+              <div>
+                <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide block">Ruang Lingkup / Materi Pokok</label>
+                <textarea rows="3" data-bind="materi" placeholder="Tuliskan topik atau bab materi yang diujikan..."
+                  class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 focus:border-blue-500 focus:bg-white outline-none">${esc(S.materi)}</textarea>
+              </div>
+
+              <div>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1.5">
+                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Daftar Tujuan Pembelajaran (1 Baris = 1 TP)</label>
+                  <button type="button" data-action="sarankan-tp" ${store.sibuk ? "disabled" : ""}
+                    class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 self-start sm:self-auto shadow-sm disabled:opacity-40">
+                    ${ico.spark} <span>Rumuskan TP Otomatis dengan AI</span>
+                  </button>
+                </div>
+                <textarea rows="5" data-bind="tp" placeholder="1. Peserta didik dapat..."
+                  class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 focus:border-blue-500 focus:bg-white outline-none">${esc(S.tp)}</textarea>
+              </div>
+
+              <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                <button type="button" data-action="ke-langkah" data-step="1"
+                  class="bg-slate-100 hover:bg-slate-200 text-navy-800 px-5 py-2.5 rounded-xl font-bold text-sm">
+                  &larr; Kembali
+                </button>
+                <button type="button" data-action="ke-langkah" data-step="3" ${!ok2 ? "disabled" : ""}
+                  class="bg-navy-800 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 disabled:opacity-40">
+                  <span>Lanjut ke Komposisi Soal</span> &rarr;
+                </button>
+              </div>
+            </div>
+          ` : ""}
+
+          <!-- LANGKAH 3: KOMPOSISI & LEVEL KOGNITIF -->
+          ${S.step === 3 ? `
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 space-y-6">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+                <div>
+                  <h2 class="text-xl font-extrabold text-navy-900">3. Komposisi Bentuk & Sebaran Level Kognitif</h2>
+                  <p class="text-xs text-slate-500">Tentukan jumlah butir soal per bentuk AKM dan bobot skor masing-masing.</p>
+                </div>
+                <div class="px-4 py-2 rounded-2xl bg-navy-800 text-white text-xs font-extrabold self-start">
+                  Total: <span class="text-amber-400 text-base">${totSoal}</span> Butir Soal
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                ${Object.keys(BENTUK_INFO).map(b => {
+                  const infoB = BENTUK_INFO[b];
+                  const jml = S.jumlah[b] || 0;
+                  const skr = S.skor[b] || infoB.skorDefault;
+                  return `
+                    <div class="p-4 rounded-2xl border-2 transition-all ${jml > 0 ? "border-navy-800/30 bg-white shadow-sm" : "border-slate-100 bg-slate-50/70"}">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm font-extrabold text-navy-900">${infoB.label}</span>
+                        <span class="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-black text-slate-500">${infoB.kode}</span>
+                      </div>
+                      <p class="text-[11px] text-slate-500 mt-0.5">${infoB.desc}</p>
+                      <div class="grid grid-cols-2 gap-2.5 mt-3 pt-3 border-t border-slate-100">
+                        <div>
+                          <label class="text-[10px] font-bold text-slate-400 uppercase block">Jumlah Soal</label>
+                          <input type="number" min="0" max="40" data-jumlah="${b}" value="${jml}"
+                            class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-sm font-extrabold text-navy-900" />
+                        </div>
+                        <div>
+                          <label class="text-[10px] font-bold text-slate-400 uppercase block">Skor / Butir</label>
+                          <input type="number" min="1" max="25" data-skor="${b}" value="${skr}"
+                            class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-sm font-bold text-slate-700" />
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+
+              <!-- Proporsi Kognitif LOTS / MOTS / HOTS -->
+              <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-extrabold text-navy-900 uppercase tracking-wide">Proporsi Level Kognitif (%)</span>
+                  <span class="text-xs font-bold text-slate-500">Total: ${Number(S.proporsi.lots) + Number(S.proporsi.mots) + Number(S.proporsi.hots)}%</span>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                  <div>
+                    <label class="text-[11px] font-bold text-emerald-700 block">LOTS (C1–C2) %</label>
+                    <input type="number" min="0" max="100" data-prop="lots" value="${S.proporsi.lots}"
+                      class="w-full mt-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-extrabold" />
+                  </div>
+                  <div>
+                    <label class="text-[11px] font-bold text-blue-700 block">MOTS (C3) %</label>
+                    <input type="number" min="0" max="100" data-prop="mots" value="${S.proporsi.mots}"
+                      class="w-full mt-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-extrabold" />
+                  </div>
+                  <div>
+                    <label class="text-[11px] font-bold text-amber-700 block">HOTS (C4–C6) %</label>
+                    <input type="number" min="0" max="100" data-prop="hots" value="${S.proporsi.hots}"
+                      class="w-full mt-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-extrabold" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                <button type="button" data-action="ke-langkah" data-step="2"
+                  class="bg-slate-100 hover:bg-slate-200 text-navy-800 px-5 py-2.5 rounded-xl font-bold text-sm">
+                  &larr; Kembali
+                </button>
+                <div class="flex flex-wrap items-center gap-2.5">
+                  ${S.soal.length > 0 ? `
+                    <button type="button" data-action="ke-langkah" data-step="4"
+                      class="bg-slate-100 hover:bg-slate-200 text-navy-800 px-4 py-3 rounded-xl font-bold text-sm">
+                      Lihat Hasil Sebelumnya (${S.soal.length})
+                    </button>
+                  ` : ""}
+                  <button type="button" data-action="buat-semua" ${!ok3 || store.sibuk ? "disabled" : ""}
+                    class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-xl font-black shadow-lg shadow-amber-500/25 flex items-center gap-2 disabled:opacity-40 transition-all">
+                    ${ico.spark} <span>Susun ${totSoal} Soal & Kisi-Kisi Sekarang</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ` : ""}
+
+          <!-- LANGKAH 4: HASIL PAKET ASESMEN, SUNTING & EKSPOR WORD -->
+          ${S.step === 4 ? `
+            <div class="space-y-5">
+              <!-- Toolbar Aksi Dokumen -->
+              <div class="glass-panel rounded-3xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <!-- Tab 4 Jenis Dokumen -->
+                <div class="flex flex-wrap gap-1.5 bg-slate-100 p-1.5 rounded-2xl">
+                  ${Object.keys(DOK).map(k => `
+                    <button type="button" data-action="ganti-tab" data-tab="${k}"
+                      class="px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all ${
+                        S.tab === k ? "bg-navy-800 text-white shadow-sm" : "text-slate-600 hover:text-navy-900"
+                      }">
+                      ${DOK[k][0]}
+                    </button>
+                  `).join("")}
+                </div>
+
+                <!-- Tombol Ekspor, Cloud & Cetak -->
+                <div class="flex flex-wrap items-center gap-2">
+                  ${S.soal.length < totSoal && !store.sibuk ? `
+                    <button type="button" data-action="lanjut-buat"
+                      class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl font-extrabold text-xs flex items-center gap-1.5 shadow">
+                      ${ico.spark} <span>Lanjutkan yang belum (${totSoal - S.soal.length})</span>
+                    </button>
+                  ` : ""}
+                  <button type="button" data-action="simpan-cloud" ${store.cloudLoading || !S.soal.length ? "disabled" : ""}
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 disabled:opacity-40">
+                    ${ico.cloud} <span>${store.cloudLoading ? "Menyimpan..." : "Simpan Cloud"}</span>
+                  </button>
+                  <button type="button" data-action="ekspor-word-semua" ${!S.soal.length ? "disabled" : ""}
+                    class="bg-navy-800 hover:bg-navy-900 text-white px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 disabled:opacity-40">
+                    ${ico.word} <span>Ekspor Paket (.doc)</span>
+                  </button>
+                  <button type="button" data-action="ekspor-word-tab" ${!S.soal.length ? "disabled" : ""}
+                    class="bg-slate-100 hover:bg-slate-200 text-navy-800 px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 disabled:opacity-40">
+                    ${ico.word} <span>Unduh ${DOK[S.tab][0]}</span>
+                  </button>
+                  <button type="button" data-action="cetak-dok" ${!S.soal.length ? "disabled" : ""}
+                    class="bg-slate-100 hover:bg-slate-200 text-navy-800 px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 disabled:opacity-40">
+                    ${ico.print} <span>Cetak</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Panel Kontrol Cepat Per Butir Soal (Sunting & Ganti AI) -->
+              ${S.soal.length > 0 && S.tab === "soal" ? `
+                <div class="glass-panel rounded-2xl p-4">
+                  <div class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2.5">
+                    Kontrol Cepat Per Butir Soal (Klik untuk Sunting Manual atau Ganti via AI)
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    ${S.soal.map(q => `
+                      <div class="inline-flex items-center rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+                        <span class="px-2.5 py-1.5 text-xs font-extrabold bg-slate-50 text-navy-900 border-r border-slate-200">
+                          #${q.no} <span class="text-[10px] font-semibold text-slate-400">${BENTUK_INFO[q.bentuk]?.kode}</span>
+                        </span>
+                        <button type="button" data-action="buka-sunting" data-no="${q.no}" title="Sunting Manual"
+                          class="px-2.5 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-50 flex items-center gap-1">
+                          ${ico.edit} <span>Edit</span>
+                        </button>
+                        <button type="button" data-action="ganti-soal" data-no="${q.no}" ${store.sibuk ? "disabled" : ""} title="Buat Ulang Butir Ini dengan AI"
+                          class="px-2.5 py-1.5 text-xs font-bold text-amber-600 hover:bg-amber-50 border-l border-slate-100 flex items-center gap-1 disabled:opacity-40">
+                          ${ico.refresh}
+                        </button>
+                      </div>
+                    `).join("")}
+                  </div>
+                </div>
+              ` : ""}
+
+              <!-- Pratinjau Lembar Kertas A4 -->
+              <div class="paper-sheet rounded-2xl p-6 sm:p-10 mx-auto max-w-4xl overflow-x-auto">
+                ${DOK[S.tab][1](S)}
+              </div>
+
+              <div class="flex justify-between items-center pt-2">
+                <button type="button" data-action="ke-langkah" data-step="3"
+                  class="bg-slate-200/80 hover:bg-slate-300 text-navy-900 px-5 py-2.5 rounded-xl font-bold text-sm">
+                  &larr; Ubah Komposisi Soal
+                </button>
+                <button type="button" data-action="konfirm-reset"
+                  class="text-xs font-bold text-rose-600 hover:underline">
+                  Reset & Buat Paket Baru
+                </button>
+              </div>
+            </div>
+          ` : ""}
+        </div>
+      `;
+    }
+
+    function renderModalSunting() {
+      const f = store.sunting;
+      if (!f) return "";
+      return `
+        <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl space-y-4 my-8">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 class="text-lg font-extrabold text-navy-900">Sunting Butir Soal Nomor ${f.no} (${BENTUK_INFO[f.bentuk]?.label})</h3>
+              <button type="button" data-action="tutup-sunting" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 font-bold text-slate-600">✕</button>
+            </div>
+
+            ${f.galat ? `
+              <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">${esc(f.galat)}</div>
+            ` : ""}
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[11px] font-bold text-slate-400 uppercase block">Level Kognitif</label>
+                <select data-sunting="level" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold">
+                  <option value="LOTS" ${f.level === "LOTS" ? "selected" : ""}>LOTS</option>
+                  <option value="MOTS" ${f.level === "MOTS" ? "selected" : ""}>MOTS</option>
+                  <option value="HOTS" ${f.level === "HOTS" ? "selected" : ""}>HOTS</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[11px] font-bold text-slate-400 uppercase block">Skor Maksimal</label>
+                <input type="number" min="1" max="50" data-sunting="skor" value="${esc(f.skor)}" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold" />
+              </div>
+            </div>
+
+            <div>
+              <label class="text-[11px] font-bold text-slate-400 uppercase block">Stimulus / Wacana (Opsional)</label>
+              <textarea rows="2" data-sunting="stimulus" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-medium">${esc(f.stimulus)}</textarea>
+            </div>
+
+            <div>
+              <label class="text-[11px] font-bold text-slate-400 uppercase block">Pokok Pertanyaan *</label>
+              <textarea rows="3" data-sunting="soal" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-semibold">${esc(f.soal)}</textarea>
+            </div>
+
+            ${f.bentuk === "pg" || f.bentuk === "pgk" ? `
+              <div>
+                <label class="text-[11px] font-bold text-slate-400 uppercase block">Pilihan Jawaban (1 Baris = 1 Opsi, tanpa huruf A/B/C)</label>
+                <textarea rows="4" data-sunting="opsi" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-medium">${esc(f.opsi)}</textarea>
+              </div>
+              <div>
+                <label class="text-[11px] font-bold text-slate-400 uppercase block">Kunci Jawaban (${f.bentuk === "pg" ? "Contoh: B" : "Contoh: A, C"})</label>
+                <input type="text" data-sunting="kunci" value="${esc(f.kunci)}" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-extrabold uppercase" />
+              </div>
+            ` : ""}
+
+            ${f.bentuk === "bs" ? `
+              <div>
+                <label class="text-[11px] font-bold text-slate-400 uppercase block">Pernyataan (Awali tiap baris dengan B| atau S|)</label>
+                <textarea rows="4" data-sunting="pern" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-medium">${esc(f.pern)}</textarea>
+              </div>
+            ` : ""}
+
+            ${f.bentuk === "mj" ? `
+              <div>
+                <label class="text-[11px] font-bold text-slate-400 uppercase block">Pasangan Tepat (Format: Premis Kiri | Jawaban Kanan)</label>
+                <textarea rows="3" data-sunting="pas" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-medium">${esc(f.pas)}</textarea>
+              </div>
+              <div>
+                <label class="text-[11px] font-bold text-slate-400 uppercase block">Opsi Pengecoh Kanan (Opsional, 1 per baris)</label>
+                <textarea rows="2" data-sunting="peng" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-medium">${esc(f.peng)}</textarea>
+              </div>
+            ` : ""}
+
+            ${f.bentuk === "is" || f.bentuk === "ur" ? `
+              <div>
+                <label class="text-[11px] font-bold text-slate-400 uppercase block">Kunci Jawaban / Pedoman Jawaban</label>
+                <textarea rows="3" data-sunting="kunci" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-semibold">${esc(f.kunci)}</textarea>
+              </div>
+            ` : ""}
+
+            <div>
+              <label class="text-[11px] font-bold text-slate-400 uppercase block">Pembahasan Soal</label>
+              <textarea rows="2" data-sunting="pembahasan" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm">${esc(f.pembahasan)}</textarea>
+            </div>
+
+            <div class="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button type="button" data-action="tutup-sunting" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">Batal</button>
+              <button type="button" data-action="simpan-sunting" class="px-5 py-2.5 rounded-xl bg-navy-800 hover:bg-navy-900 text-white text-xs font-extrabold">Simpan Perubahan</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderModalKonfirmReset() {
+      if (!store.konfirm) return "";
+      return `
+        <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 class="text-lg font-extrabold text-navy-900">Mulai Paket Asesmen Baru?</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Seluruh butir soal pada draft saat ini akan dikosongkan. Pastikan Anda sudah menekan <b>Simpan Cloud</b> atau <b>Ekspor Paket (.doc)</b> jika masih membutuhkannya.
+            </p>
+            <div class="flex justify-end gap-2 pt-2">
+              <button type="button" data-action="batal-reset" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Batal</button>
+              <button type="button" data-action="eksekusi-reset" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-extrabold text-white">Ya, Kosongkan Draft</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMainLayout() {
+      const navItems = [
+        { id: "dashboard", label: "Dashboard & Arsip", icon: ico.dash },
+        { id: "generator", label: "Generator Asesmen", icon: ico.spark },
+        { id: "bank_guru", label: "Guru & Pengaturan AI", icon: ico.users }
+      ];
+
+      return `
+        <!-- FIXED SIDEBAR (DESKTOP) -->
+        <aside class="desktop-sidebar fixed top-0 left-0 bottom-0 glass-nav border-r border-slate-200/80 flex-col justify-between p-5 z-30 overflow-y-auto">
+          <div class="space-y-6">
+            <!-- Brand -->
+            <div class="flex items-center gap-3 px-1">
+              <div class="w-10 h-10 rounded-2xl bg-navy-800 text-amber-400 flex items-center justify-center shadow">
+                ${ico.logo}
+              </div>
+              <div>
+                <div class="text-base font-extrabold text-navy-900 leading-none">AsesmenPro <span class="text-amber-500">AI</span></div>
+                <div class="text-[11px] font-semibold text-slate-400 mt-1">Kurikulum Merdeka</div>
+              </div>
+            </div>
+
+            <!-- Menu Navigasi -->
+            <nav class="space-y-1.5">
+              ${navItems.map(item => {
+                const active = store.nav === item.id;
+                return `
+                  <button type="button" data-action="nav-go" data-nav="${item.id}"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-extrabold transition-all ${
+                      active
+                        ? "bg-navy-800 text-white shadow-md shadow-navy-800/15"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-navy-900"
+                    }">
+                    <span class="${active ? "text-amber-400" : "text-slate-400"}">${item.icon}</span>
+                    <span>${item.label}</span>
+                  </button>
+                `;
+              }).join("")}
+            </nav>
+
+            <!-- Ekspor / Impor Proyek JSON -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-2">
+              <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Cadangan Proyek JSON</div>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" data-action="simpan-json" class="py-2 px-2.5 rounded-xl bg-white border border-slate-200 hover:border-navy-800 text-[11px] font-bold text-navy-800">
+                  Unduh JSON
+                </button>
+                <label class="py-2 px-2.5 rounded-xl bg-white border border-slate-200 hover:border-navy-800 text-[11px] font-bold text-navy-800 text-center cursor-pointer">
+                  Muat JSON
+                  <input type="file" accept=".json" data-action="muat-json" class="hidden" />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profil Pengguna & Logout -->
+          <div class="pt-4 border-t border-slate-200/80 space-y-3">
+            <div class="flex items-center gap-3 px-1">
+              <div class="w-9 h-9 rounded-full bg-amber-100 text-amber-800 font-extrabold text-xs flex items-center justify-center shrink-0">
+                ${esc((store.user.nama_lengkap || "U").slice(0, 2).toUpperCase())}
+              </div>
+              <div class="min-w-0">
+                <div class="text-xs font-extrabold text-slate-800 truncate">${esc(store.user.nama_lengkap)}</div>
+                <div class="text-[10px] font-semibold text-slate-400 uppercase">${esc(store.user.role)} &bull; ${esc(store.user.username)}</div>
+              </div>
+            </div>
+            <button type="button" data-action="logout"
+              class="w-full py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold flex items-center justify-center gap-2 transition-all">
+              ${ico.logout} <span>Keluar Sesi</span>
+            </button>
+          </div>
+        </aside>
+
+        <!-- MOBILE TOP HEADER -->
+        <header class="lg:hidden sticky top-0 z-20 glass-nav border-b border-slate-200/80 px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-navy-800 text-amber-400 flex items-center justify-center">
+              ${ico.logo}
+            </div>
+            <div>
+              <div class="text-sm font-extrabold text-navy-900">AsesmenPro <span class="text-amber-500">AI</span></div>
+              <div class="text-[10px] font-semibold text-slate-500">${esc(store.user.nama_lengkap)}</div>
+            </div>
+          </div>
+          <button type="button" data-action="logout" class="p-2 rounded-xl bg-rose-50 text-rose-600" title="Keluar">
+            ${ico.logout}
+          </button>
+        </header>
+
+        <!-- MAIN WORKSPACE -->
+        <main class="main-content-area flex-1 px-4 sm:px-6 lg:px-8 pt-6 max-w-full box-border">
+          <div class="max-w-5xl mx-auto">
+            ${renderAlertBar()}
+            ${store.nav === "dashboard" ? renderDashboardView() : ""}
+            ${store.nav === "generator" ? renderGeneratorView() : ""}
+            ${store.nav === "bank_guru" ? renderBankGuruView() : ""}
+
+            <!-- Footer Kredit -->
+            <footer class="mt-10 pt-5 border-t border-slate-200/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+              <div>&copy; 2026 AsesmenPro AI &bull; Perangkat Asesmen Kurikulum Merdeka</div>
+              <div class="flex items-center gap-3 text-slate-400">
+                <span class="inline-flex items-center gap-1 hover:text-navy-800">${ico.ig}</span>
+                <span class="inline-flex items-center gap-1 hover:text-navy-800">${ico.yt}</span>
+                <span class="inline-flex items-center gap-1 hover:text-navy-800">${ico.tt}</span>
+              </div>
+            </footer>
+          </div>
+        </main>
+
+        <!-- FLOATING BOTTOM NAVIGATION BAR (MOBILE / HP) -->
+        <nav class="mobile-bottom-nav fixed bottom-3 left-3 right-3 z-30 glass-nav border border-slate-200/90 rounded-2xl shadow-xl p-1.5 justify-around items-center">
+          ${navItems.map(item => {
+            const active = store.nav === item.id;
+            return `
+              <button type="button" data-action="nav-go" data-nav="${item.id}"
+                class="flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-xl text-[10px] font-extrabold transition-all ${
+                  active ? "bg-navy-800 text-white shadow-sm" : "text-slate-500"
+                }">
+                <span class="${active ? "text-amber-400" : "text-slate-400"} mb-0.5">${item.icon}</span>
+                <span class="truncate max-w-[96px]">${item.label.split("&")[0]}</span>
+              </button>
+            `;
+          }).join("")}
+        </nav>
+
+        ${renderModalSunting()}
+        ${renderModalKonfirmReset()}
+      `;
+    }
+
+    function render() {
+      const root = document.getElementById("app");
+      if (!root) return;
+      if (!store.user) {
+        root.innerHTML = renderLoginScreen();
+      } else {
+        root.innerHTML = renderMainLayout();
+      }
+    }
+
+    /* ============================================================================
+       9. EVENT DELEGATION (KLIK, INPUT, SUBMIT)
+       ============================================================================ */
+    document.addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-action]");
+      if (!btn) return;
+      const act = btn.dataset.action;
+
+      if (act === "switch-login") {
+        store.loginTab = btn.dataset.tab;
+        store.loginError = "";
+        render();
+      } else if (act === "logout") {
+        await handleLogout();
+      } else if (act === "nav-go") {
+        store.nav = btn.dataset.nav;
+        window.scrollTo(0, 0);
+        render();
+      } else if (act === "ke-langkah") {
+        const st = Number(btn.dataset.step);
+        if (st === 4 && !store.S.soal.length) {
+          setInfo("warn", "Susun soal terlebih dahulu pada Langkah 3.");
+          return;
+        }
+        upS({ step: st });
+        store.pesan = { jenis: "", teks: "" };
+        window.scrollTo(0, 0);
+      } else if (act === "tutup-pesan") {
+        setInfo("", "");
+      } else if (act === "batal-ai") {
+        store.batal = true;
+      } else if (act === "sarankan-tp") {
+        await sarankanTP();
+      } else if (act === "buat-semua") {
+        await buatSemua(false);
+      } else if (act === "lanjut-buat") {
+        await buatSemua(true);
+      } else if (act === "ganti-tab") {
+        upS({ tab: btn.dataset.tab });
+      } else if (act === "ekspor-word-semua") {
+        eksporWord(store.S, null);
+      } else if (act === "ekspor-word-tab") {
+        eksporWord(store.S, store.S.tab);
+      } else if (act === "cetak-dok") {
+        cetakDokumen();
+      } else if (act === "simpan-cloud") {
+        await simpanKeCloud();
+      } else if (act === "muat-cloud") {
+        const item = store.cloudPaket.find(x => x.id === btn.dataset.id);
+        if (item) muatPaketDariCloud(item);
+      } else if (act === "hapus-cloud") {
+        await hapusPaketCloud(btn.dataset.id);
+      } else if (act === "buka-sunting") {
+        bukaSunting(Number(btn.dataset.no));
+      } else if (act === "tutup-sunting") {
+        store.sunting = null;
+        render();
+      } else if (act === "simpan-sunting") {
+        simpanSunting();
+      } else if (act === "ganti-soal") {
+        await gantiSoal(Number(btn.dataset.no));
+      } else if (act === "konfirm-reset") {
+        store.konfirm = "baru";
+        render();
+      } else if (act === "batal-reset") {
+        store.konfirm = "";
+        render();
+      } else if (act === "eksekusi-reset") {
+        store.konfirm = "";
+        upS({ soal: [], step: 1 });
+        setInfo("ok", "Draft baru siap disusun.");
+      } else if (act === "simpan-json") {
+        const nm = `Proyek_${JENIS[store.S.jenis].singkat}_${namaMapel(store.S)}_${store.S.kelas}`.replace(/[^A-Za-z0-9]+/g, "_") + ".json";
+        unduh(nm, [JSON.stringify({ ...store.S, apiKey: "" }, null, 2)], "application/json");
+      }
+    });
+
+    document.addEventListener("change", (e) => {
+      const el = e.target;
+      if (el.dataset.action === "ganti-jenjang") {
+        const jenjang = el.value;
+        const kls = JENJANG[jenjang].kelas[0];
+        const mp = daftarMapel(jenjang, kls);
+        upS(p => ({
+          jenjang,
+          kelas: kls,
+          mapel: mp.includes(p.mapel) ? p.mapel : mp[0],
+          cpSel: [0]
+        }));
+      } else if (el.dataset.action === "ganti-kelas") {
+        const kelas = el.value;
+        const mp = daftarMapel(store.S.jenjang, kelas);
+        upS(p => ({
+          kelas,
+          mapel: mp.includes(p.mapel) ? p.mapel : mp[0],
+          cpSel: [0]
+        }));
+      } else if (el.dataset.action === "ganti-mapel") {
+        upS({ mapel: el.value, cpSel: [0] });
+      } else if (el.dataset.action === "toggle-cp") {
+        const idx = Number(el.dataset.idx);
+        const cur = Array.isArray(store.S.cpSel) ? [...store.S.cpSel] : [];
+        const next = cur.includes(idx) ? cur.filter(i => i !== idx) : [...cur, idx];
+        upS({ cpSel: next });
+      } else if (el.dataset.action === "muat-json" && el.files?.[0]) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const d = JSON.parse(reader.result);
+            upS(p => ({ ...JSON.parse(JSON.stringify(DEF)), ...d, apiKey: p.apiKey, model: p.model }));
+            setInfo("ok", "File proyek JSON berhasil dimuat.");
+          } catch (err) {
+            setInfo("err", "File proyek JSON tidak valid.");
+          }
+        };
+        reader.readAsText(el.files[0]);
+      } else if (el.dataset.bind === "jenis") {
+        const j = el.value;
+        upS({ jenis: j, waktu: JENIS[j]?.waktuDefault || 90 });
+      }
+    });
+
+    document.addEventListener("input", (e) => {
+      const el = e.target;
+      if (el.dataset.bind) {
+        const key = el.dataset.bind;
+        store.S[key] = el.value;
+        try {
+          localStorage.setItem("gsa_canvas", JSON.stringify(store.S));
+        } catch (err) {}
+      } else if (el.dataset.jumlah) {
+        const b = el.dataset.jumlah;
+        store.S.jumlah[b] = Math.max(0, parseInt(el.value, 10) || 0);
+        try {
+          localStorage.setItem("gsa_canvas", JSON.stringify(store.S));
+        } catch (err) {}
+        render();
+      } else if (el.dataset.skor) {
+        const b = el.dataset.skor;
+        store.S.skor[b] = Math.max(1, parseInt(el.value, 10) || 1);
+        try {
+          localStorage.setItem("gsa_canvas", JSON.stringify(store.S));
+        } catch (err) {}
+      } else if (el.dataset.prop) {
+        const k = el.dataset.prop;
+        store.S.proporsi[k] = Math.max(0, Math.min(100, parseInt(el.value, 10) || 0));
+        try {
+          localStorage.setItem("gsa_canvas", JSON.stringify(store.S));
+        } catch (err) {}
+      } else if (el.dataset.sunting && store.sunting) {
+        store.sunting[el.dataset.sunting] = el.value;
+      }
+    });
+
+    document.addEventListener("submit", async (e) => {
+      if (e.target.id === "form-login-guru") {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        await handleLoginGuru(fd.get("username"), fd.get("password"));
+      } else if (e.target.id === "form-login-admin") {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        await handleLoginAdmin(fd.get("email"), fd.get("password"));
+      } else if (e.target.id === "form-tambah-guru") {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const baru = {
+          username: String(fd.get("username") || "").trim(),
+          password: String(fd.get("password") || "").trim(),
+          nama_lengkap: String(fd.get("nama_lengkap") || "").trim(),
+          unit_sekolah: store.S.sekolah,
+          role: "guru"
+        };
+        if (!baru.username || !baru.password || !baru.nama_lengkap) return;
+        try {
+          if (USE_FIREBASE && fbDb) {
+            await ensureFirebaseAuthSession();
+            await addDoc(collection(fbDb, "artifacts", APP_ID, "public", "data", "users_guru"), {
+              ...baru,
+              created_at: serverTimestamp()
+            });
+          } else {
+            store.guruList.push({ id: "g_" + Date.now(), ...baru });
+          }
+          e.target.reset();
+          setInfo("ok", `Akun guru "${baru.nama_lengkap}" berhasil ditambahkan.`);
+        } catch (err) {
+          setInfo("err", "Gagal menambah guru: " + err.message);
+        }
+      }
+    });
+
+    /* ============================================================================
+       10. INISIALISASI SAAT HALAMAN DIMUAT
+       ============================================================================ */
+    window.addEventListener("DOMContentLoaded", async () => {
+      render();
+      if (USE_FIREBASE) {
+        await autoSetupDatabase();
+        if (store.user) {
+          startFirestoreListeners();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
